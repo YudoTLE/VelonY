@@ -1,0 +1,32 @@
+# Node modules (common)
+**/node_modules/
+**/.npm/
+
+# Logs
+**/logs
+**/*.log
+**/npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+**/.env
+**/.env.*
+
+# Build output
+# Next.js build output
+/frontend/.next/
+# Fastify build output (if using TypeScript or bundler like esbuild)
+**/dist/
+**/build/
+
+# VSCode
+.vscode/
+
+# IDE folders
+.idea/
+
+# Test coverage
+**/coverage/
