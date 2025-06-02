@@ -6,6 +6,7 @@ export type MessageData = {
   modelId?: string
   type: MessageType
   content: string
+  extra: string
 }
 
 export type MessageRaw = MessageData & {
@@ -96,6 +97,7 @@ export const createOptimisticMessage = (
     conversationId,
     type: 'user',
     content,
+    extra: '',
     senderName: 'You',
     senderAvatarUrl: '',
     agentName: '',

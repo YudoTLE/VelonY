@@ -260,6 +260,43 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       throw new Error('Unauthenticated')
     }
 
+    const receiveMessageChunk = async (
+      { messageId, deltaContent, deltaExtra }:
+      { messageId: Message['id'], deltaContent: Message['content'], deltaExtra: Message['extra'] }) => {
+      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
+
+      let updatedMessage: Message | undefined
+      queryClient.setQueryData(
+        ['messages', conversationId],
+        ((oldCache?: MessageCache) => {
+          const old: MessageCache = oldCache || {
+            list: [],
+            registry: new Map(),
+          }
+
+          const newList = [...old.list]
+          const newRegistry = new Map(old.registry)
+          
+          updatedMessage = newRegistry.get(messageId)
+          if (updatedMessage !== undefined) {
+            updatedMessage.content += deltaContent
+            updatedMessage.extra += deltaExtra
+          }
+
+          return {
+            list: newList,
+            registry: newRegistry,
+          }
+        })
+      )
+      // queryClient.setQueryData(
+      //   ['messages', conversationId, 'latest-added'],
+      //   () => {
+      //     return updatedMessage
+      //   }
+      // )
+    }
+
     const receiveMessage = async (newMessageRaw: MessageRaw) => {
       await queryClient.cancelQueries({ queryKey: ['messages', conversationId] })
       
@@ -273,9 +310,15 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
             registry: new Map(),
           }
 
-          const newList = [...old.list, newMessage]
+          const newList = [...old.list]
           const newRegistry = new Map(old.registry)
 
+          const at = newList.findIndex(message => message.id === newMessage.id)
+          if (at === -1) {
+            newList.push(newMessage)
+          } else {
+            newList[at] = newMessage
+          }
           newRegistry.set(newMessage.id, newMessage)
 
           return {
@@ -322,9 +365,11 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       )
     }
 
+    socket.on('receive-message-chunk', receiveMessageChunk)
     socket.on('receive-message', receiveMessage)
     socket.on('remove-message', removeMessage)
     return () => {
+      socket.off('receive-message-chunk', receiveMessageChunk)
       socket.off('receive-message', receiveMessage)
       socket.off('remove-message', removeMessage)
     }
@@ -333,5 +378,5 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
 
 export const useLatestAddedMessage = (conversationId: string) => {
   const queryClient = useQueryClient()
-  return queryClient.getQueryData<Message | null>(['messages', conversationId, 'latest-added']) ?? null
+  return queryClient.getQueryData<Message | undefined>(['messages', conversationId, 'latest-added']) ?? undefined
 }

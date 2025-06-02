@@ -72,21 +72,27 @@ export const MessageInput = ({
       if (conversationId) {
         if (!!content) {
           sendMessage1({
-            content,
             type: 'user',
+            content,
+            extra: '',
           })
           el.value = ''
           resize()
         } else {
           sendMessage1({
-            content: '---',
             type: 'agent',
+            content: '',
+            extra: '',
             ...(usedAgent && { agentId: usedAgent }),
             ...(usedModel && { modelId: usedModel }),
           })
         }
       } else {
-        sendMessage2({ content, type: 'user' })
+        sendMessage2({
+          type: 'user',
+          content,
+          extra: '',
+        })
         setEnabled(false)
       }
     }

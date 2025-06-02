@@ -8,6 +8,7 @@ CREATE TABLE messages (
   
   type            VARCHAR(10) NOT NULL,
   content         TEXT NOT NULL,
+  extra           TEXT NOT NULL DEFAULT '',
   
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()

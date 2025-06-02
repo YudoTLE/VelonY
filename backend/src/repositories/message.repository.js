@@ -15,6 +15,24 @@ export default function MessageRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
+    async update(messageId, payload) {
+      const { supabase } = getContext()
+
+      const { data, error } = await supabase.
+        rpc('update_message', {
+          type: null,
+          content: null,
+          extra: null,
+          agent_id: null,
+          model_id: null,
+          ...changeKeys.snakeCase(payload),
+          message_id: messageId,
+        })
+        .single()
+      if (error) throw new Error(error.message)
+      return changeKeys.camelCase(data)
+    },
+
     async delete(messageId) {
       const { supabase } = getContext()
 

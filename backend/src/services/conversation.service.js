@@ -36,6 +36,7 @@ export default function ConversationService({ repo, io }) {
     async postMessage({
       conversationId,
       content,
+      extra,
     }) {
       const { user } = getContext()
 
@@ -43,8 +44,9 @@ export default function ConversationService({ repo, io }) {
       
       const message = await repo.message.createForUser(user.sub, {
         conversationId,
-        content,
         type: 'user',
+        content,
+        extra,
       })
       
       const participants = await repo.user.listForConversation(conversationId)
@@ -69,6 +71,7 @@ export default function ConversationService({ repo, io }) {
       const messages = await repo.message.listForConversation(conversationId, { maxToken: 1000 })
       const agent = await repo.agent.get(agentId)
       const model = await repo.model.get(modelId)
+      const participants = await repo.user.listForConversation(conversationId)
 
       const openai = new OpenAI({
         baseURL: model.endpointUrl,
@@ -77,6 +80,7 @@ export default function ConversationService({ repo, io }) {
 
       const payload = {
         model: model.llmModel,
+        stream: true,
         temperature: agent.temperature,
         messages: [
           {
@@ -87,8 +91,8 @@ export default function ConversationService({ repo, io }) {
               `# Instruction`,
               `- Always use the metadata to understand who is speaking.`,
               `- Respond naturally as the agent, without repeating or referencing the metadata.`,
-              `- Maintain consistency with your agent_name (from the metadata).`,
-              `- Do not include any metadata in your response.`,
+              `- Maintain consistency as ${agent.name}.`,
+              `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
               agent.systemPrompt,
             ].join('\n'),
           },
@@ -117,24 +121,65 @@ export default function ConversationService({ repo, io }) {
                 return null;
             }
           }).filter(Boolean),
+          {
+            role: 'user',
+            content: [
+              `**HEAVY REMINDER**`,
+              `# Identity`,
+              `You are an AI agent ${agent.name} with agentId ${agent.id} using model ${model.name} with modelId with agentId ${model.id} in a private (or possibly group) conversation.`,
+              `# Instruction`,
+              `- Always use the metadata to understand who is speaking.`,
+              `- Respond naturally as the agent, without repeating or referencing the metadata.`,
+              `- Maintain consistency as ${agent.name}.`,
+              `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
+              agent.systemPrompt,
+            ].join('\n'),
+          },
         ],
       }
-      const response = await openai.chat.completions.create(payload)
 
-      const message = await repo.message.createForUser(user.sub, {
-        conversationId,
-        content: response.choices[0].message.content,
-        type: 'agent',
-        agentId,
-        modelId,
-      })
+      const stream = await openai.chat.completions.create(payload)
 
-      const participants = await repo.user.listForConversation(conversationId)
-      for (const participant of participants) {
-        io.of('/users').to(participant.id).emit('receive-message', message)
+      let streamedMessage
+      try {
+        streamedMessage = await repo.message.createForUser(user.sub, {
+          conversationId,
+          content: '',
+          extra: '',
+          type: 'agent',
+          agentId,
+          modelId,
+        })
+
+        for (const participant of participants) {
+          io.of('/users').to(participant.id).emit('receive-message', streamedMessage)
+        }
+
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta
+          
+          const deltaContent = delta.content || ''
+          const deltaExtra = delta.reasoning_content || ''
+
+          streamedMessage.content += deltaContent
+          streamedMessage.extra += deltaExtra
+
+          for (const participant of participants) {
+            io.of('/users').to(participant.id).emit('receive-message-chunk', {
+              messageId: streamedMessage.id,
+              deltaContent,
+              deltaExtra,
+            })
+          }
+        }
+      } catch(e) {
+        throw e
+      } finally {
+        return await repo.message.update(streamedMessage.id, {
+          content: streamedMessage.content,
+          extra: streamedMessage.extra,
+        })
       }
-
-      return message
     },
   }
 }

@@ -38,13 +38,14 @@ export default function ConversationController({ service, log }) {
 
     async postMessage(request, reply) {
       const { conversationId } = request.params
-      const { content, type, agentId, modelId } = request.body
+      const { type, content, extra, agentId, modelId } = request.body
 
       try {
         if (type === 'user') {
           const data = await service.postMessage({
             conversationId,
             content,
+            extra,
           })
           reply.code(201).send(data)
         }

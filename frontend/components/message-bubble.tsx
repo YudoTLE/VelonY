@@ -12,7 +12,10 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { cn } from '@/lib/utils'
+
 import {
   Avatar,
   AvatarFallback,
@@ -163,12 +166,17 @@ export const MessageBubbleAI = (
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId)
 
-  const handleCopy = () => {
+  const handleCopyExtra = () => {
+    navigator.clipboard.writeText(message.extra)
+  }
+  const handleCopyContent = () => {
     navigator.clipboard.writeText(message.content)
   }
   const handleDelete = () => {
     deleteMutation(message.id)
   }
+
+  const hasReasoning = message.extra.trim().length > 0
   
   return (
     <div className={cn(
@@ -180,6 +188,35 @@ export const MessageBubbleAI = (
       </Avatar>
       <div className='mr-10'>
         <div className='text-muted-foreground text-xs mt-2'>{message.agentName} — {message.modelName}</div>
+        {hasReasoning &&
+          <ScrollArea className='relative overflow-hidden grow-1 basis-1 max-h-30 flex flex-col flex-1 max-w-none prose prose-invert text-xs p-1 mb-2'>
+            <div className='pointer-events-none absolute -top-1 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent z-10' />
+            <div className='pointer-events-none absolute -bottom-1 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10' />
+
+            <Button
+              onClick={handleCopyExtra}
+              variant='ghost'
+              size='xs'
+              className='absolute right-2.5 top-0  text-blue-400 z-20 bg-zinc-900/50 backdrop-blur-2xl border border-white/10'
+            >
+              <Copy />
+            </Button>
+
+            <div className='absolute bottom-0 right-2.5 text-blue-400 z-20 bg-zinc-900/50 backdrop-blur-2xl px-2 py-1 rounded border border-white/10 cursor-default'>
+              Reasoning
+            </div>
+
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className='whitespace-pre-wrap break-words'>{children}</p>,
+                pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
+              }}
+            >
+              {message.extra}
+            </ReactMarkdown>
+          </ScrollArea>
+        }
+
         <div className='overflow-hidden max-w-none prose prose-invert text-white'>
           <ReactMarkdown
             components={{
@@ -197,7 +234,7 @@ export const MessageBubbleAI = (
         </div>
         <div>
           <Button
-            onClick={handleCopy}
+            onClick={handleCopyContent}
             variant={'ghost'}
             size='sm'
             className='opacity-50 group-hover:opacity-80'
