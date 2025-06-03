@@ -108,10 +108,10 @@ export const MessageInput = ({
   }
 
   return (
-    <div className={cn('z-10 relative w-full max-w-2xl mx-auto group px-3', className)}>
+    <div className={cn('z-25 relative w-full max-w-2xl mx-auto group px-3', className)}>
       <div className='absolute inset-0 inset-x-2 inset-y-2 group-focus-within:inset-x-0 group-focus-within:inset-y-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-xl blur-xl opacity-30 group-focus-within:opacity-70 transition transition-all-200 animate-tilt' />
 
-      <Card className='relative z-10 w-full py-4 gap-3 rounded-3xl shadow-lg backdrop-blur-sm bg-card/50 group-focus-within:bg-card/85'>
+      <Card className='relative z-25 w-full py-4 gap-3 rounded-3xl shadow-lg backdrop-blur-sm bg-card/50 group-focus-within:bg-card/85'>
         <CardContent>
           <ScrollArea
             className='flex flex-col flex-1 grow-1 basis-1 overflow-y-auto'

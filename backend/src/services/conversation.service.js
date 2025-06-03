@@ -78,63 +78,53 @@ export default function ConversationService({ repo, io }) {
         apiKey: model.apiKey,
       })
 
+      const systemPrompt = {
+        role: 'system',
+        content: [
+          `# Identity`,
+          `You are an AI agent ${agent.name} with agentId ${agent.id} using model ${model.name} with modelId with agentId ${model.id} in a private (or possibly group) conversation.`,
+          `# Instruction`,
+          `- Always use the metadata to understand who is speaking.`,
+          `- Respond naturally as the agent, without repeating or referencing the metadata.`,
+          `- Maintain consistency as ${agent.name}.`,
+          `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
+          agent.systemPrompt,
+        ].join('\n'),
+      }
+      const messageLogs = messages.map((message) => {
+        switch (message.type) {
+          case 'user':
+            return {
+              role: 'user',
+              content: [
+                `[sender: (${message.senderId}) ${message.senderName}]`,
+                '',
+                message.content,
+              ].join('\n'),
+            }
+          case 'agent':
+            return {
+              role: message.agentId === agentId ? 'assistant' : 'user',
+              content: message.agentId === agentId ? message.content : [
+                `[agent: (${message.agentId}) ${message.agentName}]`,
+                // `[model: (${message.modelId}) ${message.modelName}]`,
+                '',
+                message.content,
+              ].join('\n'),
+            }
+          default:
+            return null;
+        }
+      }).filter(Boolean)
+
       const payload = {
         model: model.llmModel,
         stream: true,
         temperature: agent.temperature,
         messages: [
-          {
-            role: 'system',
-            content: [
-              `# Identity`,
-              `You are an AI agent ${agent.name} with agentId ${agent.id} using model ${model.name} with modelId with agentId ${model.id} in a private (or possibly group) conversation.`,
-              `# Instruction`,
-              `- Always use the metadata to understand who is speaking.`,
-              `- Respond naturally as the agent, without repeating or referencing the metadata.`,
-              `- Maintain consistency as ${agent.name}.`,
-              `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
-              agent.systemPrompt,
-            ].join('\n'),
-          },
-          ...messages.map((message) => {
-            switch (message.type) {
-              case 'user':
-                return {
-                  role: 'user',
-                  content: [
-                    `[sender: (${message.senderId}) ${message.senderName}]`,
-                    '',
-                    message.content,
-                  ].join('\n'),
-                }
-              case 'agent':
-                return {
-                  role: message.agentId === agentId ? 'assistant' : 'user',
-                  content: message.agentId === agentId ? message.content : [
-                    `[agent: (${message.agentId}) ${message.agentName}]`,
-                    // `[model: (${message.modelId}) ${message.modelName}]`,
-                    '',
-                    message.content,
-                  ].join('\n'),
-                }
-              default:
-                return null;
-            }
-          }).filter(Boolean),
-          {
-            role: 'user',
-            content: [
-              `**HEAVY REMINDER**`,
-              `# Identity`,
-              `You are an AI agent ${agent.name} with agentId ${agent.id} using model ${model.name} with modelId with agentId ${model.id} in a private (or possibly group) conversation.`,
-              `# Instruction`,
-              `- Always use the metadata to understand who is speaking.`,
-              `- Respond naturally as the agent, without repeating or referencing the metadata.`,
-              `- Maintain consistency as ${agent.name}.`,
-              `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
-              agent.systemPrompt,
-            ].join('\n'),
-          },
+          systemPrompt,
+          ...messageLogs,
+          systemPrompt,
         ],
       }
 

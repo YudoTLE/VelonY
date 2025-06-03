@@ -1,7 +1,10 @@
 import { Message } from '@/types/message.types'
 import { useDeleteMessage } from '@/hooks/use-messages'
 
+import React from 'react'
 import ReactMarkdown from 'react-markdown'
+import CodeBlock from '@/components/code-block'
+import MermaidChart from '@/components/mermaid-chart'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -90,7 +93,7 @@ export const MessageBubble = (
               <ReactMarkdown
                 components={{
                   p: ({ children }) => <p className='whitespace-pre-wrap break-words'>{children}</p>,
-                  pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
+                  // pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
                 }}
               >
                 {message.content}
@@ -186,7 +189,7 @@ export const MessageBubbleAI = (
       <Avatar className='h-8 w-8 rounded-full mt-4 mr-1'>
         <AvatarFallback className='rounded-lg bg-purple-500 cursor-default'>{message.initial}</AvatarFallback>
       </Avatar>
-      <div className='mr-10'>
+      <div className='w-full'>
         <div className='text-muted-foreground text-xs mt-2'>{message.agentName} — {message.modelName}</div>
         {hasReasoning &&
           <ScrollArea className='relative overflow-hidden grow-1 basis-1 max-h-30 flex flex-col flex-1 max-w-none prose prose-invert text-xs p-1 mb-2'>
@@ -221,7 +224,25 @@ export const MessageBubbleAI = (
           <ReactMarkdown
             components={{
               p: ({ children }) => <p className='whitespace-pre-wrap break-words'>{children}</p>,
-              pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
+              pre: ({ children, className, ...props }) => {
+                return <pre className={cn(className, 'p-0 m-0 bg-transparent overflow-y-hidden')} {...props}>
+                  {children}
+                </pre>
+              },
+              code: ({ className, children, ...props }) => {
+                const match = /language-(\w+)/.exec(className || '')
+                const language = match ? match[1] : ''
+                const code = String(children).replace(/\n$/, '')
+
+                if (language === 'mermaid') {
+                  return <MermaidChart chart={code} />
+                }
+                if (language) {
+                  return <CodeBlock code={code} language={language} />
+                }
+                
+                return <code {...props}>{code}</code>
+              }
             }}
           >
             {message.content}
@@ -251,6 +272,7 @@ export const MessageBubbleAI = (
           </Button>
         </div>
       </div>
+      <div className='w-10' />
     </div>
   )
 }
