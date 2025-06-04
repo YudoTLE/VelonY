@@ -108,6 +108,8 @@ export const useSendMessageByConversation = (conversationId: string) => {
     },
 
     onSuccess: ({ newMessage }, variables, context) => {
+      const tempId = newMessage.type === 'user' ? context.newMessageTemp.id : newMessage.id
+
       queryClient.setQueryData(
         ['messages', conversationId],
         ((oldCache?: MessageCache) => {
@@ -119,13 +121,13 @@ export const useSendMessageByConversation = (conversationId: string) => {
           const newList = [...old.list]
           const newRegistry = new Map(old.registry)
 
-          const at = newList.findIndex(message => message.id === context.newMessageTemp.id)
+          const at = newList.findIndex(message => message.id === tempId)
           if (at === -1) {
             newList.push(newMessage)
             newRegistry.set(newMessage.id, newMessage)
           } else {
             newList[at] = newMessage
-            newRegistry.delete(context.newMessageTemp.id)
+            newRegistry.delete(tempId)
             newRegistry.set(newMessage.id, newMessage)
           }
 
@@ -281,6 +283,7 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
           if (updatedMessage !== undefined) {
             updatedMessage.content += deltaContent
             updatedMessage.extra += deltaExtra
+            updatedMessage.status = 'sending'
           }
 
           return {

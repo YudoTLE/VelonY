@@ -24,6 +24,7 @@ import ruby from 'highlight.js/lib/languages/ruby'
 import rust from 'highlight.js/lib/languages/rust'
 import sql from 'highlight.js/lib/languages/sql'
 import markdown from 'highlight.js/lib/languages/markdown'
+import yaml from 'highlight.js/lib/languages/yaml'
 import 'highlight.js/styles/github-dark.css' // theme
 
 hljs.registerLanguage('javascript', javascript)
@@ -43,6 +44,7 @@ hljs.registerLanguage('ruby', ruby)
 hljs.registerLanguage('rust', rust)
 hljs.registerLanguage('sql', sql)
 hljs.registerLanguage('markdown', markdown)
+hljs.registerLanguage('yaml', yaml)
 
 interface CodeBlockProps {
   code: string
@@ -51,6 +53,8 @@ interface CodeBlockProps {
 
 const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   const ref = useRef<HTMLElement>(null)
+
+  const effectiveLanguage = language === 'mermaid' ? 'yaml' : language
 
   const handleCopy = () => {
     if (!ref.current) return
@@ -70,7 +74,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
         }
       }
     }
-  }, [code, language])
+  }, [code, effectiveLanguage])
 
   return (
     <div className='-mb-[21px]'>
@@ -91,7 +95,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
         <code
           ref={ref}
           className={cn(
-            language && `language-${language}`
+            effectiveLanguage && `language-${effectiveLanguage}`
           )}
         >
           {code}

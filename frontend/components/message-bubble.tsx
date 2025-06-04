@@ -234,8 +234,10 @@ export const MessageBubbleAI = (
                 const language = match ? match[1] : ''
                 const code = String(children).replace(/\n$/, '')
 
-                if (language === 'mermaid') {
-                  return <MermaidChart chart={code} />
+                if (message.status !== 'sending') {
+                  if (language === 'mermaid') {
+                    return <MermaidChart chart={code} />
+                  }
                 }
                 if (language) {
                   return <CodeBlock code={code} language={language} />
