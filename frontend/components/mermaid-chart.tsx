@@ -33,7 +33,10 @@ const MermaidChart: React.FC<MermaidChartProps> = ({ chart }) => {
           }
         } catch {
           const trash = document.getElementById(`d${id}`)
-          if (trash?.parentNode) trash.parentNode.removeChild(trash)
+          if (trash) {
+            trash.style.display = 'none'
+            trash.remove()
+          }
 
           if (ref.current) {
             ref.current.innerHTML = `<pre>${chart}</pre>`
