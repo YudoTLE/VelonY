@@ -42,14 +42,16 @@ export default function ConversationService({ repo, io }) {
 
       if (!user) throw { status: 401, message: 'Unauthorized' }
       
-      const message = await repo.message.createForUser(user.sub, {
-        conversationId,
-        type: 'user',
-        content,
-        extra,
-      })
-      
-      const participants = await repo.user.listForConversation(conversationId)
+      const [message, participants] = await Promise.all([
+        repo.message.createForUser(user.sub, {
+          conversationId,
+          type: 'user',
+          content,
+          extra,
+        }),
+        repo.user.listForConversation(conversationId),
+      ])
+
       for (const participant of participants) {
         if (participant.id !== user.sub) {
           io.of('/users').to(participant.id).emit('receive-message', message)
@@ -68,10 +70,12 @@ export default function ConversationService({ repo, io }) {
 
       if (!user) throw { status: 401, message: 'Unauthorized' }
       
-      const messages = await repo.message.listForConversation(conversationId, { maxToken: 1000 })
-      const agent = await repo.agent.get(agentId)
-      const model = await repo.model.get(modelId)
-      const participants = await repo.user.listForConversation(conversationId)
+      const [messages, agent, model, participants] = await Promise.all([
+        repo.message.listForConversation(conversationId, { maxToken: 1000 }),
+        repo.agent.get(agentId),
+        repo.model.get(modelId),
+        repo.user.listForConversation(conversationId)
+      ])
 
       const openai = new OpenAI({
         baseURL: model.endpointUrl,
