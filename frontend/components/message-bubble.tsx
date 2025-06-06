@@ -3,6 +3,7 @@ import { useDeleteMessage } from '@/hooks/use-messages';
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/code-block';
 import MermaidChart from '@/components/mermaid-chart';
 import { Button } from '@/components/ui/button';
@@ -231,6 +232,7 @@ export const MessageBubbleAI = (
 
         <div className="overflow-hidden max-w-none prose prose-invert text-white">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
               pre: ({ children, className, ...props }) => {

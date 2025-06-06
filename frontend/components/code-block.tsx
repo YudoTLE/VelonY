@@ -24,6 +24,7 @@ import ruby from 'highlight.js/lib/languages/ruby';
 import rust from 'highlight.js/lib/languages/rust';
 import sql from 'highlight.js/lib/languages/sql';
 import markdown from 'highlight.js/lib/languages/markdown';
+import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github-dark.css'; // theme
 
@@ -44,6 +45,7 @@ hljs.registerLanguage('ruby', ruby);
 hljs.registerLanguage('rust', rust);
 hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('yaml', yaml);
 
 interface CodeBlockProps {
