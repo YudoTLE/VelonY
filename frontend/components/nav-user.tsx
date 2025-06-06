@@ -25,7 +25,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User } from '@/types/user.types';
 import { useMe } from '@/hooks/use-users';
 
 const NavUserContent = ({ user, isPending }: { user?: User, isPending: boolean }) => {

@@ -1,5 +1,6 @@
 import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
+import { mapSupabaseError } from '../lib/error.js'
 
 export default function ModelRepository() {
   return {
@@ -9,7 +10,7 @@ export default function ModelRepository() {
       const { data, error } = await supabase
         .from('enriched_models')
         .select()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
@@ -20,7 +21,7 @@ export default function ModelRepository() {
         .from('enriched_models')
         .select()
         .eq('creator_id', userId)
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
@@ -32,7 +33,7 @@ export default function ModelRepository() {
         .select()
         .eq('id', modelId)
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
 
@@ -45,7 +46,7 @@ export default function ModelRepository() {
           model_id: modelId,
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
 
@@ -58,7 +59,7 @@ export default function ModelRepository() {
           creator_id: userId,
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     }
   }

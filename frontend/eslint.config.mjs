@@ -17,12 +17,12 @@ const eslintConfig = [
     rules: {
       // Semicolons - always required
       '@stylistic/semi': ['error', 'always'],
-      
+
       // Quotes - single quotes for JS/TS, double for JSX
       '@stylistic/quotes': ['error', 'single'],
       '@stylistic/jsx-quotes': ['error', 'prefer-double'],
-    }
-  }
+    },
+  },
 ];
 
 export default eslintConfig;

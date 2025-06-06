@@ -5,13 +5,11 @@ export default function MessageService({ repo, io }) {
     async delete(messageId) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const [message, participants] = await Promise.all([
-        repo.message.delete(messageId),
-        repo.user.listForConversation(message.conversationId)
-      ])
-
+      const message = await repo.message.delete(messageId)
+      const participants = await repo.user.listForConversation(message.conversationId)
+      
       for (const participant of participants) {
         io.of('/users').to(participant.id).emit('remove-message', message)
       }

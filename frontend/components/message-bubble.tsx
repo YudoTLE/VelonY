@@ -1,4 +1,3 @@
-import { Message } from '@/types/message.types';
 import { useDeleteMessage } from '@/hooks/use-messages';
 
 import React from 'react';

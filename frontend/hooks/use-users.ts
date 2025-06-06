@@ -1,6 +1,6 @@
-import { UserRaw, processRawUser } from '@/types/user.types';
-
 import { useQuery } from '@tanstack/react-query';
+
+import { processRawUser } from '@/lib/transformers';
 import api from '@/lib/axios';
 
 export const useMe = () => {

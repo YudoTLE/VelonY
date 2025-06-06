@@ -5,7 +5,7 @@ export default function UserService({ repo }) {
     async getMe() {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       return await repo.user.get(user.sub)
     },
   }

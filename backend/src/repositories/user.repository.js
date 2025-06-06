@@ -1,5 +1,6 @@
 import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
+import { mapSupabaseError } from '../lib/error.js'
 
 export default function UserRepository() {
   return {
@@ -10,7 +11,7 @@ export default function UserRepository() {
         .rpc('get_participants', {
           conversation_id: conversationId
         })
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
@@ -22,7 +23,7 @@ export default function UserRepository() {
           user_id: userId,
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
 
@@ -35,7 +36,7 @@ export default function UserRepository() {
           user_id: userId,
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     }
   }

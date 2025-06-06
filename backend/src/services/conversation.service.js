@@ -6,21 +6,21 @@ export default function ConversationService({ repo, io }) {
     async delete(conversationId) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       return await repo.conversation.delete(conversationId)
     },
 
     async list() {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       return await repo.conversation.listForUser(user.sub)
     },
 
     async create({ title }) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       return await repo.conversation.createForUser(user.sub, {
         title
       })
@@ -29,7 +29,7 @@ export default function ConversationService({ repo, io }) {
     async listMessages(conversationId) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       return await repo.message.listForConversation(conversationId, { maxToken: 100 })
     },
 
@@ -40,7 +40,7 @@ export default function ConversationService({ repo, io }) {
     }) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       
       const [message, participants] = await Promise.all([
         repo.message.createForUser(user.sub, {
@@ -68,7 +68,7 @@ export default function ConversationService({ repo, io }) {
     }) {
       const { user } = getContext()
 
-      if (!user) throw { status: 401, message: 'Unauthorized' }
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
       
       const [messages, agent, model, participants] = await Promise.all([
         repo.message.listForConversation(conversationId, { maxToken: 1000 }),

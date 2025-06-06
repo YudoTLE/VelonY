@@ -1,5 +1,6 @@
 import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
+import { mapSupabaseError } from '../lib/error.js'
 
 export default function ConversationRepository() {
   return {
@@ -11,7 +12,7 @@ export default function ConversationRepository() {
           conversation_id: conversationId
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
 
@@ -22,7 +23,7 @@ export default function ConversationRepository() {
         .rpc('get_conversations', {
           user_id: userId
         })
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
@@ -35,7 +36,7 @@ export default function ConversationRepository() {
           creator_id: userId,
         })
         .single()
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
   }

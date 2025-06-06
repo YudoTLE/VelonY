@@ -2,9 +2,8 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useMe } from './use-users';
-import { MessageData, Message, MessageCache, processRawMessage, processRawMessages, createOptimisticMessage, MessageRaw } from '@/types/message.types';
-import { ConversationCache, processRawConversation, ConversationRaw } from '@/types/conversation.types';
 
+import { processRawMessage, processRawMessages, processRawConversation } from '@/lib/transformers';
 import { getSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 
@@ -49,6 +48,31 @@ export const useFetchMessages = (conversationId: string) => {
 export const useSendMessageByConversation = (conversationId: string) => {
   const queryClient = useQueryClient();
   const { data: me } = useMe();
+
+  const createOptimisticMessage = (
+    content: string,
+    conversationId: string,
+  ): Message => {
+    const now = new Date();
+    const tempId = `t-${crypto.randomUUID()}`;
+
+    return {
+      id: tempId,
+      conversationId,
+      type: 'user',
+      content,
+      extra: '',
+      senderName: 'You',
+      senderAvatarUrl: '',
+      agentName: '',
+      modelName: '',
+      status: 'sending',
+      isOwn: true,
+      initial: '',
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
 
   return useMutation({
     mutationFn: async (payload: MessageData) => {

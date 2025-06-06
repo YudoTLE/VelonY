@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import Cookies from 'js-cookie';
+import Cookies from 'universal-cookie';
 
 const LoggedinPage = () => {
   const router = useRouter();
@@ -16,16 +16,20 @@ const LoggedinPage = () => {
     if (token) {
       queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
 
-      Cookies.set('token', token, {
-        sameSite: 'Lax',
-        expires: 1, // expires in 1 day
+      const cookies = new Cookies();
+      cookies.set('token', token, {
+        sameSite: 'lax',
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
+        path: '/',
       });
     }
 
     router.replace('/');
   }, [router, queryClient]);
 
-  return <div>Logging you in...</div>;
+  return (
+    <div>Logging you in...</div>
+  );
 };
 
 export default LoggedinPage;

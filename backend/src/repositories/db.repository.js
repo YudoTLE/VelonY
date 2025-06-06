@@ -1,5 +1,6 @@
 import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
+import { mapSupabaseError } from '../lib/error.js'
 import { saveToken } from '../lib/token-store.js'
 
 export default function DBRepository() {
@@ -11,7 +12,7 @@ export default function DBRepository() {
         provider,
         token,
       })
-      if (error) throw new Error(error.message)
+      if (error) throw mapSupabaseError(error)
 
       const userId = data.user.id
       const accessToken = data.session.access_token

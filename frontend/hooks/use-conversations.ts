@@ -1,9 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useMe } from './use-users';
-import { ConversationRaw, ConversationData, Conversation, ConversationCache, processRawConversations, processRawConversation } from '@/types/conversation.types';
-import { MessageRaw } from '@/types/message.types';
 
+import { processRawConversations, processRawConversation } from '@/lib/transformers';
 import { getSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 

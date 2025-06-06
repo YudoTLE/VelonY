@@ -2,8 +2,7 @@ import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useMe } from '@/hooks/use-users';
 
-import { AgentRaw, Agent, processRawAgents, AgentData, processRawAgent, AgentCache } from '@/types/agent.types';
-
+import { processRawAgent, processRawAgents } from '@/lib/transformers';
 import api from '@/lib/axios';
 
 export const useFetchAgents = () => {
