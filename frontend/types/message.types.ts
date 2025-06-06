@@ -1,5 +1,5 @@
-export type MessageType = 'user' | 'agent' | 'system'
-export type MessageStatus = 'sending' | 'sent' | 'failed' | 'deleting' | 'deleted'
+export type MessageType = 'user' | 'agent' | 'system';
+export type MessageStatus = 'sending' | 'sent' | 'failed' | 'deleting' | 'deleted';
 
 export type MessageData = {
   agentId?: string
@@ -7,7 +7,7 @@ export type MessageData = {
   type: MessageType
   content: string
   extra: string
-}
+};
 
 export type MessageRaw = MessageData & {
   id: string
@@ -18,16 +18,16 @@ export type MessageRaw = MessageData & {
   senderAvatarUrl?: string
   agentName?: string
   modelName?: string
-  
+
   createdAt: string
   updatedAt: string
-}
+};
 
 export type Message = MessageData & {
   id: string
   conversationId: string
   senderId?: string
-  
+
   senderName: string
   senderAvatarUrl: string
   agentName: string
@@ -39,27 +39,27 @@ export type Message = MessageData & {
 
   createdAt: Date
   updatedAt: Date
-}
+};
 
 export type MessageCache = {
   list: Message[]
   registry: Map<string, Message>
-}
+};
 
 export const processRawMessage = (
   raw: MessageRaw,
   config: {
     selfId: string
     status: MessageStatus
-  }
+  },
 ): Message => {
-  const isOwn = !!config.selfId && config.selfId === raw.senderId
-  const senderName = isOwn ? 'You' : raw.senderName || '<VelonY User>'
-  const senderAvatarUrl = raw.senderAvatarUrl || ''
-  const agentName = raw.agentName || '<VelonY Agent>'
-  const modelName = raw.modelName || '<VelonY Model>'
+  const isOwn = !!config.selfId && config.selfId === raw.senderId;
+  const senderName = isOwn ? 'You' : raw.senderName || '<VelonY User>';
+  const senderAvatarUrl = raw.senderAvatarUrl || '';
+  const agentName = raw.agentName || '<VelonY Agent>';
+  const modelName = raw.modelName || '<VelonY Model>';
   const initial = (raw.type === 'user' ? senderName : agentName)
-    .trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase()
+    .trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
 
   return {
     ...raw,
@@ -72,26 +72,26 @@ export const processRawMessage = (
     initial,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-  }
-}
+  };
+};
 
 export const processRawMessages = (
   raws: MessageRaw[],
   config: {
     selfId: string
     status: MessageStatus
-  }
+  },
 ): Message[] => {
-  return raws.map(message => processRawMessage(message, config))
-}
+  return raws.map(message => processRawMessage(message, config));
+};
 
 export const createOptimisticMessage = (
   content: string,
   conversationId: string,
 ): Message => {
-  const now = new Date()
-  const tempId = `t-${crypto.randomUUID()}`
-  
+  const now = new Date();
+  const tempId = `t-${crypto.randomUUID()}`;
+
   return {
     id: tempId,
     conversationId,
@@ -107,5 +107,5 @@ export const createOptimisticMessage = (
     initial: '',
     createdAt: now,
     updatedAt: now,
-  }
-}
+  };
+};

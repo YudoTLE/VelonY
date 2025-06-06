@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { useSessionTabState } from '@/hooks/use-session-state'
-import { useRealtimeSyncConversations } from '@/hooks/use-conversations'
-import Link from 'next/link'
+import * as React from 'react';
+import { useSessionTabState } from '@/hooks/use-session-state';
+import { useRealtimeSyncConversations } from '@/hooks/use-conversations';
+import Link from 'next/link';
 import {
   NavGroupConversations,
   NavPrivateConversations,
   NavMyAgents,
   NavMyModels,
-} from '@/components/nav-main'
-import { NavUser } from '@/components/nav-user'
+} from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -19,23 +19,23 @@ import {
   SidebarGroup,
   SidebarMenu,
   SidebarGroupLabel,
-} from '@/components/ui/sidebar'
+} from '@/components/ui/sidebar';
 import {
   Tabs,
   TabsContent,
   TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs'
-import { 
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import {
   Bot,
   MessageSquare,
   Cpu,
   Settings,
-} from 'lucide-react'
+} from 'lucide-react';
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {  
-  useRealtimeSyncConversations()
-  const [value, setValue] = useSessionTabState('velony:sidebar:main-tabs', '')
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  useRealtimeSyncConversations();
+  const [value, setValue] = useSessionTabState('velony:sidebar:main-tabs', '');
 
   return (
     <Tabs
@@ -95,5 +95,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarFooter>
       </Sidebar>
     </Tabs>
-  )
+  );
 }

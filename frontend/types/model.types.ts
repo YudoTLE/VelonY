@@ -1,4 +1,4 @@
-export type ModelVisibility = 'private' | 'public' | 'default'
+export type ModelVisibility = 'private' | 'public' | 'default';
 
 export type ModelData = {
   visibility: ModelVisibility
@@ -6,7 +6,7 @@ export type ModelData = {
   llmModel: string
   endpointUrl: string
   apiKey?: string
-}
+};
 
 export type ModelRaw = ModelData & {
   id: string
@@ -14,7 +14,7 @@ export type ModelRaw = ModelData & {
 
   createdAt: string
   updatedAt: string
-}
+};
 
 export type Model = ModelData & {
   id: string
@@ -22,21 +22,21 @@ export type Model = ModelData & {
 
   isOwn: boolean
   url: string
-  
+
   createdAt: Date
   updatedAt: Date
-}
+};
 
 export type ModelCache = {
   list: Model[]
   registry: Map<string, Model>
-}
+};
 
 export const processRawModel = (
   raw: ModelRaw,
   config: { selfId: string },
 ): Model => {
-  const isOwn = !!config.selfId && config.selfId === raw.creatorId
+  const isOwn = !!config.selfId && config.selfId === raw.creatorId;
 
   return {
     ...raw,
@@ -44,12 +44,12 @@ export const processRawModel = (
     url: `/m/${raw.id}`,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-  }
-}
+  };
+};
 
 export const processRawModels = (
   raws: ModelRaw[],
   config: { selfId: string },
 ): Model[] => {
-  return raws.map(model => processRawModel(model, config))
-}
+  return raws.map(model => processRawModel(model, config));
+};

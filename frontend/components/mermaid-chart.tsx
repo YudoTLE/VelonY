@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react'
-import mermaid from 'mermaid'
+import React, { useEffect, useRef } from 'react';
+import mermaid from 'mermaid';
 
 interface MermaidChartProps {
   chart: string
 }
 
 const MermaidChart: React.FC<MermaidChartProps> = ({ chart }) => {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (ref.current) {
@@ -20,35 +20,36 @@ const MermaidChart: React.FC<MermaidChartProps> = ({ chart }) => {
           primaryTextColor: '#dddddd',
           lineColor: '#ff9944',
         },
-      })
+      });
 
-      const id = `mermaid-${crypto.randomUUID()}`
+      const id = `mermaid-${crypto.randomUUID()}`;
 
       const safeRender = async () => {
         try {
-          const { svg } = await mermaid.render(id, chart)
-          
-          if (ref.current) {
-            ref.current.innerHTML = svg
-          }
-        } catch {
-          const trash = document.getElementById(`d${id}`)
-          if (trash) {
-            trash.style.display = 'none'
-            trash.remove()
-          }
+          const { svg } = await mermaid.render(id, chart);
 
           if (ref.current) {
-            ref.current.innerHTML = `<pre>${chart}</pre>`
+            ref.current.innerHTML = svg;
           }
         }
-      }
+        catch {
+          const trash = document.getElementById(`d${id}`);
+          if (trash) {
+            trash.style.display = 'none';
+            trash.remove();
+          }
 
-      safeRender()
+          if (ref.current) {
+            ref.current.innerHTML = `<pre>${chart}</pre>`;
+          }
+        }
+      };
+
+      safeRender();
     }
-  }, [chart])
+  }, [chart]);
 
-  return <div ref={ref} className='flex justify-center' />
-}
+  return <div ref={ref} className="flex justify-center" />;
+};
 
-export default MermaidChart
+export default MermaidChart;

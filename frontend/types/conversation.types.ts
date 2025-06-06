@@ -1,8 +1,8 @@
-export type ConversationRole = 'admin' | 'member'
+export type ConversationRole = 'admin' | 'member';
 
 export type ConversationData = {
   title: string
-}
+};
 
 export type ConversationRaw = ConversationData & {
   id: string
@@ -13,7 +13,7 @@ export type ConversationRaw = ConversationData & {
 
   createdAt: string
   updatedAt: string
-}
+};
 
 export type Conversation = ConversationData & {
   id: string
@@ -27,18 +27,18 @@ export type Conversation = ConversationData & {
 
   isOwn: boolean
   url: string
-}
+};
 
 export type ConversationCache = {
   list: Conversation[]
   registry: Map<string, Conversation>
-}
+};
 
 export const processRawConversation = (
   raw: ConversationRaw,
-  config: { selfId: string }
+  config: { selfId: string },
 ): Conversation => {
-  const isOwn = !!config.selfId && config.selfId === raw.creatorId
+  const isOwn = !!config.selfId && config.selfId === raw.creatorId;
 
   return {
     ...raw,
@@ -46,12 +46,12 @@ export const processRawConversation = (
     isOwn,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-  }
-}
+  };
+};
 
 export const processRawConversations = (
   raws: ConversationRaw[],
   config: { selfId: string },
 ): Conversation[] => {
-  return raws.map(conversation => processRawConversation(conversation, config))
-}
+  return raws.map(conversation => processRawConversation(conversation, config));
+};
