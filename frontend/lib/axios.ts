@@ -21,7 +21,7 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
 
-      if (status === 401) {
+      if (status === 401 || status === 403) {
         cookies.remove('token');
         if (typeof window !== 'undefined') {
           window.location.href = '/auth';
