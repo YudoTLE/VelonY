@@ -31,7 +31,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -222,7 +221,6 @@ const EditAgentPage = () => {
                               <FormControl>
                                 <TextareaAutosize
                                   placeholder="You are a helpful assistant."
-                                  className="min-h-[120px]"
                                   {...field}
                                 />
                               </FormControl>
@@ -263,7 +261,7 @@ const EditAgentPage = () => {
               {pendingVisibility}
               ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
+            <div className="space-y-4">
               {pendingVisibility === 'public'
                 ? (
                     <>
@@ -311,7 +309,7 @@ const EditAgentPage = () => {
                       </Alert>
                     </>
                   )}
-            </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction

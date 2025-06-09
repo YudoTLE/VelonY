@@ -105,7 +105,6 @@ const CreateAgentPage = () => {
                             <FormControl>
                               <TextareaAutosize
                                 placeholder="You are a helpful assistant."
-                                className="min-h-[120px]"
                                 {...field}
                               />
                             </FormControl>
