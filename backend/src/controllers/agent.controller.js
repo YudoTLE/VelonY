@@ -24,14 +24,14 @@ export default function AgentController({ service, log }) {
 
     async update(request, reply) {
       const { agentId } = request.params
-      const { visibility, name, systemPrompt, temperature } = request.body
+      const { visibility, name, description, systemPrompt } = request.body
 
       try {
         const data = await service.update(agentId, {
           visibility,
           name,
+          description,
           systemPrompt,
-          temperature,
         })
         reply.code(200).send(data)
       } catch (err) {
@@ -41,19 +41,45 @@ export default function AgentController({ service, log }) {
     },
 
     async create(request, reply) {
-      const { name, systemPrompt, temperature } = request.body
+      const { name, description, systemPrompt } = request.body
 
       try {
         const data = await service.create({
           name,
+          description,
           systemPrompt,
-          temperature,
         })
         reply.code(201).send(data)
       } catch (err) {
         log.error(err)
         reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
       }
-    }
+    },
+
+    async addSubscriptionSelf(request, reply) {
+      const { user } = request
+      const { agentId } = request.params
+
+      try {
+        const data = await service.addSubscription({ userId: user.sub, agentId })
+        reply.code(200).send(data)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
+
+    async removeSubscriptionSelf(request, reply) {
+      const { user } = request
+      const { agentId } = request.params
+      
+      try {
+        const data = await service.removeSubscription({ userId: user.sub, agentId })
+        reply.code(200).send(data)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
   }
 }

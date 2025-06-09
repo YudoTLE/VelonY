@@ -6,28 +6,78 @@ export default function ModelService({ repo }) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
-      return await repo.model.listForUser(user.sub)
+      
+      const [userModels, subscribedModels, defaultModels] = await Promise.all([
+        repo.model.select({ creatorId: user.sub }),
+        repo.model.select({ userId: user.sub }),
+        repo.model.select({ visibility: 'default' })
+      ])
+    
+      const combined = [...userModels, ...subscribedModels, ...defaultModels]
+      const unique = Object.values(
+        combined.reduce((acc, model) => {
+          acc[model.id] = model
+          return acc
+        }, {})
+      )
+    
+      return unique
     },
 
     async get(modelId) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
-      return await repo.model.get(modelId)
+      
+      const model = (await repo.model.select({ modelId }))[0]
+      if (!model) {
+        throw { status: 404, message: 'Model not found' }
+      }
+      
+      return model
     },
 
-    async update(id, payload) {
+    async update(modelId, payload) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
-      return await repo.model.update(id, payload)
-    },
+      
+      const promises = []
+      if (payload?.visibility !== 'public') {
+        promises.push(repo.modelSubscription.delete({ modelId }))
+      } else {
+        promises.push(Promise.resolve())
+      }
+      promises.push(repo.model.update({ modelId }, payload))
 
+      const [_, updated] = await Promise.all(promises)
+      return updated[0]
+    },
+    
     async create(payload) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
-      return await repo.model.createForUser(user.sub, payload)
-    }
+
+      return await repo.model.insert({ ...payload, creatorId: user.sub })
+    },
+
+    async addSubscription({ userId, modelId }) {
+      const { user } = getContext()
+
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+
+      await repo.modelSubscription.insert({ userId, modelId })
+      return (await repo.model.select({ userId, modelId }))[0]
+    },
+
+    async removeSubscription({ userId, modelId }) {
+      const { user } = getContext()
+
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+
+      await repo.modelSubscription.delete({ userId, modelId })
+      return (await repo.model.select({ modelId }))[0]
+    },
   }
 }

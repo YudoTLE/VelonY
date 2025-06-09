@@ -13,7 +13,7 @@ export default function MessageRepository() {
       })
       if (error) throw mapSupabaseError(error)
       data.reverse()
-      return changeKeys.camelCase(data, 2)
+      return changeKeys.camelCase(data, 6)
     },
 
     async update(messageId, payload) {
@@ -26,12 +26,12 @@ export default function MessageRepository() {
           extra: null,
           agent_id: null,
           model_id: null,
-          ...changeKeys.snakeCase(payload),
+          ...changeKeys.snakeCase(payload, 6),
           message_id: messageId,
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
 
     async delete(messageId) {
@@ -43,7 +43,7 @@ export default function MessageRepository() {
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
 
     async createForUser(userId, payload) {
@@ -53,12 +53,12 @@ export default function MessageRepository() {
         .rpc('create_message', {
           agent_id: null,
           model_id: null,
-          ...changeKeys.snakeCase(payload),
+          ...changeKeys.snakeCase(payload, 6),
           sender_id: userId,
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     }
   }
 }

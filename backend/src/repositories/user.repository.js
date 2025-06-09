@@ -12,7 +12,7 @@ export default function UserRepository() {
           conversation_id: conversationId
         })
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 2)
+      return changeKeys.camelCase(data, 6)
     },
 
     async get(userId) {
@@ -24,20 +24,21 @@ export default function UserRepository() {
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
 
-    async createOrUpdate(userId, payload) {
+    async createOrUpdate(userId, payload = {}) {
       const { supabase } = getContext()
 
       const { data, error } = await supabase
-        .rpc('create_or_update_user', {
-          ...changeKeys.snakeCase(payload),
+        .rpc('upsert_user', {
+          ...changeKeys.snakeCase(payload, 6),
           user_id: userId,
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+
+      return changeKeys.camelCase(data, 6)
     }
   }
 }

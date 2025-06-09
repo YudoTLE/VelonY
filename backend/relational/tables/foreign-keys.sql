@@ -45,6 +45,22 @@ REFERENCES models(id)
 ON DELETE SET NULL;
 
 
+-- AGENTS
+ALTER TABLE agents
+ADD CONSTRAINT fk_agents_creator 
+FOREIGN KEY (creator_id)
+REFERENCES users(id)
+ON DELETE CASCADE;
+
+
+-- MODELS
+ALTER TABLE models
+ADD CONSTRAINT fk_models_creator 
+FOREIGN KEY (creator_id)
+REFERENCES users(id)
+ON DELETE CASCADE;
+
+
 -- CONVERSATION PARITCIPANTS
 ALTER TABLE conversation_participants
 ADD CONSTRAINT fk_conversation_participants_conversation
@@ -59,17 +75,29 @@ REFERENCES users(id)
 ON DELETE CASCADE;
 
 
--- AGENTS
-ALTER TABLE agents
-ADD CONSTRAINT fk_agents_creator 
-FOREIGN KEY (creator_id)
+-- AGENT SUBSCRIPTIONS
+ALTER TABLE agent_subscriptions
+ADD CONSTRAINT fk_agent_subscriptions_user
+FOREIGN KEY (user_id)
 REFERENCES users(id)
 ON DELETE CASCADE;
 
+ALTER TABLE agent_subscriptions
+ADD CONSTRAINT fk_agent_subscriptions_agent
+FOREIGN KEY (agent_id)
+REFERENCES agents(id)
+ON DELETE CASCADE;
 
--- MODELS
-ALTER TABLE models
-ADD CONSTRAINT fk_models_creator 
-FOREIGN KEY (creator_id)
+
+-- MODEL SUBSCRIPTIONS
+ALTER TABLE model_subscriptions
+ADD CONSTRAINT fk_model_subscriptions_user
+FOREIGN KEY (user_id)
 REFERENCES users(id)
+ON DELETE CASCADE;
+
+ALTER TABLE model_subscriptions
+ADD CONSTRAINT fk_model_subscriptions_model
+FOREIGN KEY (model_id)
+REFERENCES models(id)
 ON DELETE CASCADE;

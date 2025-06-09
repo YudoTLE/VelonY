@@ -35,8 +35,9 @@ import {
   Trash2,
   UsersRound,
   UserRound,
-  UserCog,
-  Pencil,
+  PencilLine,
+  Flame,
+  Box,
 } from 'lucide-react';
 import { DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu';
 
@@ -99,7 +100,7 @@ const SidebarNavSection = <T extends SidebarNavItem>({
                         <SidebarMenuSubItem key={idx} className="group/sideitem">
                           <SidebarMenuSubButton asChild>
                             <Link href={item.url}>
-                              <span>{item?.title ?? item?.name ?? ''}</span>
+                              <span>{(item?.title ?? item?.name ?? '')}</span>
                             </Link>
                           </SidebarMenuSubButton>
 
@@ -130,34 +131,44 @@ const SidebarNavSection = <T extends SidebarNavItem>({
   );
 };
 
+export function NavDefaultAgents() {
+  const { data, isPending } = useFetchAgents();
+
+  return (
+    <SidebarNavSection
+      title="Defaults"
+      icon={Box}
+      sessionKey="velony:sidebar:default-agents"
+      items={data?.filter(agent => agent.visibility === 'default') ?? []}
+      isLoading={isPending}
+    />
+  );
+}
+
+export function NavSubscribedAgents() {
+  const { data, isPending } = useFetchAgents();
+
+  return (
+    <SidebarNavSection
+      title="Subscriptions"
+      icon={Flame}
+      sessionKey="velony:sidebar:subscribed-agents"
+      items={data?.filter(agent => agent.isSubscribed) ?? []}
+      isLoading={isPending}
+    />
+  );
+}
+
 export function NavMyAgents() {
   const { data, isPending } = useFetchAgents();
 
   return (
     <SidebarNavSection
-      title="My Agents"
-      icon={UserCog}
+      title="My Creations"
+      icon={PencilLine}
       sessionKey="velony:sidebar:my-agents"
-      items={data?.list ?? []}
+      items={data?.filter(agent => agent.isOwn && agent.visibility !== 'default') ?? []}
       isLoading={isPending}
-      renderDropdownTrigger={() => (
-        <>
-          <MoreHorizontal />
-          <span className="sr-only">More</span>
-        </>
-      )}
-      renderDropdown={agent => (
-        <>
-          <DropdownMenuItem onSelect={() => console.log('Edit', agent)}>
-            <Pencil className="text-muted-foreground mr-2" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => console.log('Delete', agent)}>
-            <Trash2 className="text-muted-foreground mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </>
-      )}
     />
   );
 }
@@ -167,29 +178,39 @@ export function NavMyModels() {
 
   return (
     <SidebarNavSection
-      title="My Models"
-      icon={UserCog}
+      title="My Creations"
+      icon={PencilLine}
       sessionKey="velony:sidebar:my-models"
-      items={data?.list ?? []}
+      items={data?.filter(model => model.isOwn && model.visibility !== 'default') ?? []}
       isLoading={isPending}
-      renderDropdownTrigger={() => (
-        <>
-          <MoreHorizontal />
-          <span className="sr-only">More</span>
-        </>
-      )}
-      renderDropdown={model => (
-        <>
-          <DropdownMenuItem onSelect={() => console.log('Edit', model)}>
-            <Pencil className="text-muted-foreground mr-2" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => console.log('Delete', model)}>
-            <Trash2 className="text-muted-foreground mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </>
-      )}
+    />
+  );
+}
+
+export function NavDefaultModels() {
+  const { data, isPending } = useFetchModels();
+
+  return (
+    <SidebarNavSection
+      title="Defaults"
+      icon={Box}
+      sessionKey="velony:sidebar:default-models"
+      items={data?.filter(model => model.visibility === 'default') ?? []}
+      isLoading={isPending}
+    />
+  );
+}
+
+export function NavSubscribedModels() {
+  const { data, isPending } = useFetchModels();
+
+  return (
+    <SidebarNavSection
+      title="Subscriptions"
+      icon={Flame}
+      sessionKey="velony:sidebar:subscribed-models"
+      items={data?.filter(model => model.isSubscribed) ?? []}
+      isLoading={isPending}
     />
   );
 }
@@ -199,7 +220,7 @@ export function NavGroupConversations() {
 
   return (
     <SidebarNavSection
-      title="Group Conversations"
+      title="Group"
       icon={UsersRound}
       sessionKey="velony:sidebar:group-conversations"
       items={data?.list.filter(conversation => conversation.memberCount > 1) ?? []}
@@ -227,7 +248,7 @@ export function NavPrivateConversations() {
 
   return (
     <SidebarNavSection
-      title="Private Conversations"
+      title="Private"
       icon={UserRound}
       sessionKey="velony:sidebar:private-conversations"
       items={query?.list.filter(conversation => conversation.isOwn && conversation.memberCount === 1) ?? []}

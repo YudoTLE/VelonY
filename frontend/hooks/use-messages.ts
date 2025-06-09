@@ -8,7 +8,6 @@ import { getSocket } from '@/lib/socket';
 import api from '@/lib/axios';
 
 export const useFetchMessages = (conversationId: string) => {
-  const router = useRouter();
   const { data: me } = useMe();
 
   const query = useQuery({
@@ -35,12 +34,6 @@ export const useFetchMessages = (conversationId: string) => {
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });
-
-  useEffect(() => {
-    if (query.isError && query.failureCount >= 2) {
-      router.push('/');
-    }
-  }, [query.isError, query.failureCount, router]);
 
   return query;
 };
@@ -177,7 +170,8 @@ export const useSendMessageByNewConversation = () => {
         throw new Error('Unauthenticated');
       }
 
-      const { data: newConversationRaw } = await api.post<ConversationRaw>('/conversations', { title: payload.content });
+      const { data: newConversationRaw } = await api.post<ConversationRaw>('/conversations',
+        { title: payload.content, type: 'default' });
       const newConversation = processRawConversation(newConversationRaw, { selfId: me.id });
 
       const { data: newMessageRaw } = await api.post<MessageRaw>(`/conversations/${newConversation.id}/messages`, payload);

@@ -5,9 +5,12 @@ CREATE TABLE models (
   
   visibility   VARCHAR(20) NOT NULL DEFAULT 'private',
   name         VARCHAR(100) NOT NULL,
+  description  TEXT NOT NULL,
   llm_model    VARCHAR(100) NOT NULL,
   endpoint_url TEXT NOT NULL,
   api_key      TEXT NOT NULL,
+  preset       VARCHAR(50) NOT NULL DEFAULT 'Other',
+  config       JSONB NOT NULL DEFAULT '{}'::jsonb,
 
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()

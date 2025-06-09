@@ -4,63 +4,104 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function ModelRepository() {
   return {
-    async listForAll() {
+    async select({ modelId, creatorId, userId, visibility }) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('enriched_models')
         .select()
+      if (modelId != null) {
+        query = query.eq('id', modelId)
+      }
+      if (creatorId != null) {
+        query = query.eq('creator_id', creatorId)
+      }
+      if (userId != null) {
+        query = query.eq('user_id', userId)
+      }
+      if (visibility != null) {
+        query = query.eq('visibility', visibility)
+      }
+
+      const { data, error } = await query
+
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
-    async listForUser(userId) {
+    async update({ modelId, creatorId, userId, visibility }, payload = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase
-        .from('enriched_models')
-        .select()
-        .eq('creator_id', userId)
+      const updates = Object.fromEntries(
+        Object.entries(payload).filter(([_, v]) => v !== undefined)
+      )
+
+      let query = supabase
+        .from('models')
+        .update(changeKeys.snakeCase(updates))
+      if (modelId != null) {
+        query = query.eq('id', modelId)
+      }
+      if (creatorId != null) {
+        query = query.eq('creator_id', creatorId)
+      }
+      if (userId != null) {
+        query = query.eq('user_id', userId)
+      }
+      if (visibility != null) {
+        query = query.eq('visibility', visibility)
+      }
+      query = query.select()
+
+      const { data, error } = await query
+
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
-    async get(modelId) {
+    async delete({ modelId, creatorId, userId, visibility }) {
       const { supabase } = getContext()
 
+      let query = supabase
+        .from('models')
+        .delete()
+      if (modelId != null) {
+        query = query.eq('id', modelId)
+      }
+      if (creatorId != null) {
+        query = query.eq('creator_id', creatorId)
+      }
+      if (userId != null) {
+        query = query.eq('user_id', userId)
+      }
+      if (visibility != null) {
+        query = query.eq('visibility', visibility)
+      }
+      query = query.select()
+
+      const { data, error } = await query
+
+      if (error) throw mapSupabaseError(error)
+      return changeKeys.camelCase(data, 2)
+    },
+
+    async insert(payload = {}) {
+      const { supabase } = getContext()
+
+      const fields = Object.fromEntries(
+        Object.entries(payload).filter(([_, v]) => v !== undefined)
+      )
+
       const { data, error } = await supabase
-        .from('enriched_models')
+        .from('models')
+        .insert({
+          ...changeKeys.snakeCase(fields),
+        })
         .select()
-        .eq('id', modelId)
         .single()
+
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data)
     },
-
-    async update(modelId, payload) {
-      const { supabase } = getContext()
-
-      const { data, error } = await supabase
-        .rpc('update_model', {
-          ...changeKeys.snakeCase(payload),
-          model_id: modelId,
-        })
-        .single()
-      if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
-    },
-
-    async createForUser(userId, payload) {
-      const { supabase } = getContext()
-
-      const { data, error } = await supabase
-        .rpc('create_model', {
-          ...changeKeys.snakeCase(payload),
-          creator_id: userId,
-        })
-        .single()
-      if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
-    }
   }
 }

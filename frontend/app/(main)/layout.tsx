@@ -11,9 +11,9 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <div className="flex h-screen w-screen overflow-hidden">
+      <div className="flex h-screen w-screen">
         <AppSidebar />
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col">
           <SidebarTrigger />
           {children}
         </main>

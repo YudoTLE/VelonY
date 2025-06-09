@@ -16,25 +16,16 @@ export const useFetchAgents = () => {
       }
 
       const { data: agentsRaw } = await api.get<AgentRaw[]>('agents');
+      const agents = processRawAgents(agentsRaw, { selfId: me.id });
+      agents.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
-      const list = processRawAgents(agentsRaw, { selfId: me.id });
-      const registry = new Map<string, Agent>();
-
-      list.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-      for (const agent of list) {
-        registry.set(agent.id, agent);
-      }
-
-      return {
-        list,
-        registry,
-      };
+      return agents;
     },
     staleTime: 1000 * 60 * 5,
   });
 };
 
-export const useUpdateAgent = (agentId: string) => {
+export const useUpdateAgentById = (agentId: string) => {
   const queryClient = useQueryClient();
   const { data: me } = useMe();
 
@@ -50,29 +41,23 @@ export const useUpdateAgent = (agentId: string) => {
       return updatedAgent;
     },
 
-    onSuccess: (data) => {
+    onSuccess: (updatedAgent) => {
+      queryClient.setQueryData(
+        ['agent', agentId],
+        () => updatedAgent,
+      );
       queryClient.setQueryData(
         ['agents'],
-        (oldCache?: AgentCache) => {
-          const old: AgentCache = oldCache || {
-            list: [],
-            registry: new Map(),
-          };
+        (oldCache?: Agent[]) => {
+          const old: Agent[] = oldCache || [];
+          const newAgents = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          const at = newList.findIndex(agent => agent.id === data.id);
+          const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
           if (at !== -1) {
-            newList.splice(at, 1);
+            newAgents[at] = updatedAgent;
           }
-          newList.unshift(data);
-          newRegistry.set(data.id, data);
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newAgents;
         },
       );
     },
@@ -99,25 +84,77 @@ export const useCreateAgent = () => {
     onSuccess: (data) => {
       queryClient.setQueryData(
         ['agents'],
-        (oldCache?: AgentCache) => {
-          const old: AgentCache = oldCache || {
-            list: [],
-            registry: new Map(),
-          };
+        (oldCache?: Agent[]) => {
+          const old: Agent[] = oldCache || [];
+          const newAgents = [data, ...old];
 
-          const newList = [data, ...old.list];
-          const newRegistry = new Map(old.registry);
-
-          newRegistry.set(data.id, data);
-
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newAgents;
         },
       );
 
       router.push(data.url);
+    },
+  });
+};
+
+export const useFetchAgentById = (agentId: string) => {
+  const { data: me } = useMe();
+
+  return useQuery({
+    queryKey: ['agent', agentId],
+    queryFn: async () => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: agentRaw } = await api.get<AgentRaw>(`agents/${agentId}`);
+      const agent = processRawAgent(agentRaw, { selfId: me.id });
+
+      return agent;
+    },
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useToggleAgentSubscriptionById = (agentId: string) => {
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+
+  return useMutation({
+    mutationFn: async (subscribe: boolean) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: updatedAgentRaw } = subscribe
+        ? await api.post<AgentRaw>(`agents/${agentId}/subscribers/self`)
+        : await api.delete<AgentRaw>(`agents/${agentId}/subscribers/self`);
+      const updatedAgent = processRawAgent(updatedAgentRaw, { selfId: me.id });
+
+      return updatedAgent;
+    },
+    onSuccess: (updatedAgent) => {
+      queryClient.setQueryData(
+        ['agent', agentId],
+        () => updatedAgent,
+      );
+      queryClient.setQueryData(
+        ['agents'],
+        (oldCache?: Agent[]) => {
+          const old: Agent[] = oldCache ?? [];
+          const newAgents = [...old];
+
+          const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
+          if (at !== -1) {
+            newAgents[at] = updatedAgent;
+          }
+          else {
+            newAgents.unshift(updatedAgent);
+          }
+
+          return newAgents;
+        },
+      );
     },
   });
 };

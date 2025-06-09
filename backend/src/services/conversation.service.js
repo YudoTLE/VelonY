@@ -17,13 +17,11 @@ export default function ConversationService({ repo, io }) {
       return await repo.conversation.listForUser(user.sub)
     },
 
-    async create({ title }) {
+    async create(payload) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
-      return await repo.conversation.createForUser(user.sub, {
-        title
-      })
+      return await repo.conversation.createForUser(user.sub, payload)
     },
 
     async listMessages(conversationId) {
@@ -124,7 +122,7 @@ export default function ConversationService({ repo, io }) {
       const payload = {
         model: model.llmModel,
         stream: true,
-        temperature: agent.temperature,
+        ...model.config,
         messages: [
           systemPrompt,
           ...messageLogs,
@@ -174,6 +172,27 @@ export default function ConversationService({ repo, io }) {
           extra: streamedMessage.extra,
         })
       }
+    },
+
+    async addParticipant({ userId, conversationId }) {
+      const { user } = getContext()
+
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+      return await repo.conversationParticipant.insert({ userId, conversationId }, { role: 'member' })
+    },
+
+    async removeParticipant({ userId, conversationId }) {
+      const { user } = getContext()
+
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+      return await repo.conversationParticipant.delete({ userId, conversationId })
+    },
+
+    async updateParticipant({ userId, conversationId }, payload) {
+      const { user } = getContext()
+
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+      return await repo.conversationParticipant.update({ userId, conversationId }, payload)
     },
   }
 }

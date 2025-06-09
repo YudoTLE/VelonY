@@ -25,7 +25,7 @@ export default function DBRepository() {
         expiresAt: Date.now() + expiresIn * 1000
       })
 
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
   }
 }

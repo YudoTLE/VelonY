@@ -29,6 +29,14 @@ CREATE INDEX idx_models_updated_at ON models(updated_at);
 CREATE INDEX idx_conversation_participants_user_id ON conversation_participants(user_id);
 -- Note: conversation_id is already part of the primary key
 
+-- Agent subscriptions indexes
+CREATE INDEX idx_agents_creator_visibility ON agents(creator_id, visibility);
+CREATE INDEX idx_agent_subscriptions_agent_id ON agent_subscriptions(agent_id);
+
+-- Model subscriptions indexes
+CREATE INDEX idx_models_creator_visibility ON models(creator_id, visibility);
+CREATE INDEX idx_model_subscriptions_model_id ON model_subscriptions(model_id);
+
 -- Composite indexes for common query patterns
 CREATE INDEX idx_messages_conversation_created ON messages(conversation_id, created_at);
 CREATE INDEX idx_conversation_participants_role ON conversation_participants(conversation_id, user_id, role);

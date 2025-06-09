@@ -80,11 +80,19 @@ export const processRawAgent = (
   config: { selfId: string },
 ): Agent => {
   const isOwn = !!config.selfId && config.selfId === raw.creatorId;
+  const isSubscribed = !!config.selfId && config.selfId === raw.userId;
+  const isEditable = isOwn && (raw.visibility !== 'default');
+  const subscriberCount = raw.subscriberCount ?? 0;
+  const url = isEditable ? `/a/${raw.id}/edit` : `/a/${raw.id}`;
 
   return {
     ...raw,
+    subscriberCount,
     isOwn,
-    url: `/a/${raw.id}`,
+    isSubscribed,
+    isEditable,
+    url,
+    recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
   };
@@ -102,11 +110,19 @@ export const processRawModel = (
   config: { selfId: string },
 ): Model => {
   const isOwn = !!config.selfId && config.selfId === raw.creatorId;
+  const isSubscribed = !!config.selfId && config.selfId === raw.userId;
+  const isEditable = isOwn && (raw.visibility !== 'default');
+  const subscriberCount = raw.subscriberCount ?? 0;
+  const url = isEditable ? `/m/${raw.id}/edit` : `/m/${raw.id}`;
 
   return {
     ...raw,
+    subscriberCount,
     isOwn,
-    url: `/m/${raw.id}`,
+    isSubscribed,
+    isEditable,
+    url,
+    recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
   };

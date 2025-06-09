@@ -4,13 +4,17 @@ declare global {
   type AgentData = {
     visibility: AgentVisibility
     name: string
+    description: string
     systemPrompt: string
-    temperature: number
   };
 
   type AgentRaw = AgentData & {
     id: string
     creatorId: string
+
+    userId?: string
+    recentlyUsedAt?: string
+    subscriberCount?: number
 
     createdAt: string
     updatedAt: string
@@ -20,16 +24,17 @@ declare global {
     id: string
     creatorId: string
 
+    userId?: string
+    recentlyUsedAt: Date
+    subscriberCount: number
+
     isOwn: boolean
+    isSubscribed: boolean
+    isEditable: boolean
     url: string
 
     createdAt: Date
     updatedAt: Date
-  };
-
-  type AgentCache = {
-    list: Agent[]
-    registry: Map<string, Agent>
   };
 }
 

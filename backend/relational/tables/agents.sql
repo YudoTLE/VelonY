@@ -5,8 +5,8 @@ CREATE TABLE agents (
   
   visibility    VARCHAR(20) NOT NULL DEFAULT 'private',
   name          VARCHAR(100) NOT NULL,
-  system_prompt TEXT,
-  temperature   REAL,
+  description   TEXT NOT NULL,
+  system_prompt TEXT NOT NULL,
 
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()

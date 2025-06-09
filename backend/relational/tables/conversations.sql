@@ -4,6 +4,7 @@ CREATE TABLE conversations (
   creator_id UUID, -- REFERENCES users(id) ON DELETE SET NULL
 
   title      TEXT NOT NULL DEFAULT '',
+  type       VARCHAR(10) NOT NULL DEFAULT 'default',
   
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -1,13 +1,19 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
+
 import { useSessionTabState } from '@/hooks/use-session-state';
 import { useRealtimeSyncConversations } from '@/hooks/use-conversations';
-import Link from 'next/link';
+
 import {
   NavGroupConversations,
   NavPrivateConversations,
+  NavDefaultAgents,
+  NavSubscribedAgents,
   NavMyAgents,
+  NavDefaultModels,
+  NavSubscribedModels,
   NavMyModels,
 } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -26,11 +32,16 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { JoinConversationDialog } from '@/components/join-conversation-dialog';
+
 import {
   Bot,
   MessageSquare,
   Cpu,
   Settings,
+  SquarePlus,
+  Search,
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -60,6 +71,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <TabsContent value="conversations">
             <SidebarGroup>
               <SidebarGroupLabel className="my-0">Conversations</SidebarGroupLabel>
+              <div className="flex gap-2 pb-2">
+                <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
+                  <Link href="/">
+                    <SquarePlus />
+                    New
+                  </Link>
+                </Button>
+                <JoinConversationDialog />
+              </div>
               <SidebarMenu>
                 <NavGroupConversations />
                 <NavPrivateConversations />
@@ -69,7 +89,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <TabsContent value="agents">
             <SidebarGroup>
               <SidebarGroupLabel className="my-0">Agents</SidebarGroupLabel>
+              <div className="flex gap-2 pb-2">
+                <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
+                  <Link href="/a/create">
+                    <SquarePlus />
+                    New
+                  </Link>
+                </Button>
+                <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
+                  <Link href="/">
+                    <Search />
+                    Explore
+                  </Link>
+                </Button>
+              </div>
               <SidebarMenu>
+                <NavDefaultAgents />
+                <NavSubscribedAgents />
                 <NavMyAgents />
               </SidebarMenu>
             </SidebarGroup>
@@ -77,7 +113,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <TabsContent value="models">
             <SidebarGroup>
               <SidebarGroupLabel className="my-0">Models</SidebarGroupLabel>
+              <div className="flex gap-2 pb-2">
+                <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
+                  <Link href="/m/create">
+                    <SquarePlus />
+                    New
+                  </Link>
+                </Button>
+                <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
+                  <Link href="/">
+                    <Search />
+                    Explore
+                  </Link>
+                </Button>
+              </div>
               <SidebarMenu>
+                <NavDefaultModels />
+                <NavSubscribedModels />
                 <NavMyModels />
               </SidebarMenu>
             </SidebarGroup>

@@ -13,7 +13,15 @@ DECLARE
   _new_message_id UUID;
 BEGIN
   INSERT INTO messages (sender_id, conversation_id, agent_id, model_id, type, content, extra)
-  VALUES (create_message.sender_id, create_message.conversation_id, create_message.agent_id, create_message.model_id, create_message.type, create_message.content, create_message.extra)
+  VALUES (
+    create_message.sender_id,
+    create_message.conversation_id,
+    create_message.agent_id,
+    create_message.model_id,
+    create_message.type,
+    create_message.content,
+    create_message.extra
+  )
   RETURNING id INTO _new_message_id;
 
   UPDATE users

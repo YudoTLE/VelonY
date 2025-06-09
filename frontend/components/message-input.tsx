@@ -40,8 +40,8 @@ export const MessageInput = ({
   const { data: modelsQuery, isPending: isFetchModelPending } = useFetchModels();
   const { textareaRef, resize } = useAutosizeTextarea();
 
-  const agents = useMemo(() => agentsQuery?.list ?? [], [agentsQuery?.list]);
-  const models = useMemo(() => modelsQuery?.list ?? [], [modelsQuery?.list]);
+  const agents = useMemo(() => agentsQuery ?? [], [agentsQuery]);
+  const models = useMemo(() => modelsQuery ?? [], [modelsQuery]);
 
   const [usedAgent, setUsedAgent] = useState<string | null>(null);
   const [usedModel, setUsedModel] = useState<string | null>(null);

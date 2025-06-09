@@ -1,70 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { useUpdateModel, useFetchModels } from '@/hooks/use-models';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useFetchModelById, useToggleModelSubscriptionById } from '@/hooks/use-models';
 
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { LoaderCircle } from 'lucide-react';
+  Bot,
+  LoaderCircle,
+} from 'lucide-react';
 
-const formSchema = z.object({
-  visibility: z.enum(['private', 'public', 'default']),
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
-  llmModel: z.string().min(1, 'LLM Model is required').max(100, 'LLM Model is too long'),
-  endpointUrl: z.string().url('Must be a valid URL'),
-  apiKey: z.string().min(1, 'API Key is required'),
-});
+import ReactMarkdown from 'react-markdown';
 
-const CreateModelPage = () => {
+const ViewModelPage = () => {
   const params = useParams<{ id: string }>();
   const { id } = params;
-  const { mutate, isPending: isUpdatePending } = useUpdateModel(id);
-  const { data: query, error: fetchError, isPending: isFetchPending } = useFetchModels();
-  const model = query?.registry.get(id);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      visibility: 'private',
-      name: '',
-      llmModel: '',
-      endpointUrl: '',
-      apiKey: '',
-    },
-  });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    mutate(values);
-  };
-
-  useEffect(() => {
-    if (model) {
-      form.reset({
-        visibility: model.visibility,
-        name: model.name,
-        llmModel: model.llmModel,
-        endpointUrl: model.endpointUrl,
-        apiKey: model.apiKey,
-      });
-    }
-  }, [model, form]);
+  const { data: model, error: fetchError, isPending: isFetchPending } = useFetchModelById(id);
+  const { mutate, isPending: isTogglePending } = useToggleModelSubscriptionById(id);
 
   if (fetchError) {
     return (
       <div className="flex-1 flex text-muted-foreground">
-        <p className="m-auto">{fetchError.message || 'Unknown error occured'}</p>
+        <p className="m-auto">{fetchError.message || 'Unknown error occurred'}</p>
       </div>
     );
   }
@@ -78,94 +40,145 @@ const CreateModelPage = () => {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 h-screen flex">
-        <div className="max-w-2xl m-auto w-full space-y-5 px-10">
-          <div className="items-center justify-center relative space-y-10">
-            <div className="absolute left-1/8 top-2/3 -translate-x-1/2 -translate-y-1/2 size-50 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
-            <div className="absolute left-0 top-1/3 -translate-x-1/2 -translate-y-1/2 size-30 bg-blue-500 rounded-full -z-10 blur-3xl opacity-50" />
+    <div className="flex flex-col justify-center items-center gap-5 overscroll-y-auto">
+      <Card className="relative size-fit mx-4 my-16 px-8 max-w-2xl w-full bg-card/80">
+        <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-50" />
+        <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-40" />
+        <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
+        <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-60" />
+        <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-40" />
+        <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-30" />
 
-            <div className="text-4xl font-bold space-x-3 cursor-default">
-              { model?.name }
-            </div>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="items-center justify-center relative">
+              <div className="flex gap-8">
+                <Avatar className="h-24 w-24 rounded-full">
+                  <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
+                    <Bot size="48" className="text-white" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="">
+                  <div className="text-2xl font-bold">
+                    {model?.name}
+                  </div>
+                  <div>
+                    {model?.visibility === 'private'
+                      && (
+                        <Badge className="bg-secondary cursor-default border-border">
+                          <span className="bg-gray-500 rounded-full aspect-square h-2 w-2" />
+                          private
+                        </Badge>
+                      )}
+                    {model?.visibility === 'public'
+                      && (
+                        <Badge className="bg-secondary cursor-default border-border">
+                          <span className="bg-green-400 rounded-full aspect-square h-2 w-2" />
+                          public
+                        </Badge>
+                      )}
+                    {model?.visibility === 'default'
+                      && (
+                        <Badge className="bg-secondary cursor-default border-border">
+                          <span className="bg-yellow-400 aspect-square h-0.5 w-2" />
+                          default
+                        </Badge>
+                      )}
+                  </div>
+                  <div className="flex gap-5 mt-2">
+                    <div>
+                      <span>
+                        {model?.subscriberCount}
+                      </span>
+                      <span className="text-muted-foreground"> subscribers</span>
+                    </div>
+                  </div>
+                  {!model?.isOwn
+                    && (
+                      <div className="mt-2 space-x-3">
+                        {model?.isSubscribed
+                          ? (
+                              <Button
+                                onClick={() => mutate(false)}
+                                disabled={isTogglePending}
+                                variant="secondary"
+                                className="rounded-full w-25"
+                              >
+                                Subscribed
+                              </Button>
+                            )
+                          : (
+                              <Button
+                                onClick={() => mutate(true)}
+                                disabled={isTogglePending}
+                                variant="secondary"
+                                className="rounded-full w-25 bg-white text-black hover:bg-muted-foreground hover:text-black"
+                              >
+                                Subscribe
+                              </Button>
+                            )}
+                        <Button variant="secondary" className="rounded-full">
+                          Report
+                        </Button>
+                      </div>
+                    )}
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="flex items-baseline">
-                    <FormLabel className="w-30 text-md">Name</FormLabel>
-                    <div className="flex-1">
-                      <FormControl>
-                        <Input placeholder="Fast and Robust Model" {...field} />
-                      </FormControl>
-                      <FormMessage />
+              <Separator className="my-4 border" />
+
+              <div className="">
+                <ReactMarkdown>
+                  {model?.description}
+                </ReactMarkdown>
+              </div>
+
+              <Separator className="my-4 border" />
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Model Details</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-muted-foreground">LLM: </div>
+                        <div>{model?.llmModel}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Endpoint: </div>
+                        <div className="break-all">{model?.endpointUrl}</div>
+                      </div>
                     </div>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="llmModel"
-                render={({ field }) => (
-                  <FormItem className="flex items-baseline">
-                    <FormLabel className="w-30 text-md">LLM Model</FormLabel>
-                    <div className="flex-1">
-                      <FormControl>
-                        <Input placeholder="gpt-4o" {...field} />
-                      </FormControl>
-                      <FormMessage />
+                  </div>
+
+                  {model?.config && model.config.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">Configuration</h3>
+                      <div className="space-y-2">
+                        {model.config.map((configItem, index) => (
+                          <div key={index} className="">
+                            <div className="text-muted-foreground">
+                              {configItem.name}
+                              :
+                            </div>
+                            <div className="font-mono text-sm">
+                              {typeof configItem.value === 'boolean'
+                                ? configItem.value.toString()
+                                : configItem.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="endpointUrl"
-                render={({ field }) => (
-                  <FormItem className="flex items-baseline">
-                    <FormLabel className="w-30 text-md">Endpoint URL</FormLabel>
-                    <div className="flex-1">
-                      <FormControl>
-                        <Input placeholder="https://api.openai.com/v1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="apiKey"
-                render={({ field }) => (
-                  <FormItem className="flex items-baseline">
-                    <FormLabel className="w-30 text-md">API Key</FormLabel>
-                    <div className="flex-1">
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isUpdatePending} className="w-30">
-              {isUpdatePending ? 'Updating...' : 'Update'}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
-export default CreateModelPage;
+export default ViewModelPage;

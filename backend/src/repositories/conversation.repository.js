@@ -13,7 +13,7 @@ export default function ConversationRepository() {
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
 
     async listForUser(userId) {
@@ -24,7 +24,7 @@ export default function ConversationRepository() {
           user_id: userId
         })
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 2)
+      return changeKeys.camelCase(data, 6)
     },
 
     async createForUser(userId, payload) {
@@ -32,12 +32,12 @@ export default function ConversationRepository() {
 
       const { data, error } = await supabase
         .rpc('create_conversation', {
-          ...changeKeys.snakeCase(payload),
+          ...changeKeys.snakeCase(payload, 6),
           creator_id: userId,
         })
         .single()
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 6)
     },
   }
 }
