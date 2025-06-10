@@ -1,12 +1,14 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useFetchModelById, useUpdateModelById } from '@/hooks/use-models';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -26,8 +28,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-import { X, Plus, LoaderCircle } from 'lucide-react';
+import { X, Plus, LoaderCircle, Cpu } from 'lucide-react';
 
 const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
@@ -44,20 +57,15 @@ const formSchema = z.object({
   })),
 });
 
-type ModelConfigField = {
-  type: 'string' | 'float' | 'integer' | 'boolean'
-  name: string
-  value: string | number | boolean
-};
-
-type ModelFieldType = 'string' | 'float' | 'integer' | 'boolean';
-
 const EditModelPage = () => {
   const params = useParams<{ id: string }>();
   const { id } = params;
 
   const { data: model, error: fetchError, isPending: isFetchPending } = useFetchModelById(id);
   const { mutate: updateModel, isPending: isUpdatePending } = useUpdateModelById(id);
+
+  const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
+  const [originalValues, setOriginalValues] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,9 +81,13 @@ const EditModelPage = () => {
     },
   });
 
+  const currentValues = form.watch();
+  const hasChanges = originalValues && JSON.stringify(currentValues) !== JSON.stringify(originalValues);
+  const { formState: { dirtyFields } } = form;
+
   useEffect(() => {
     if (model) {
-      form.reset({
+      const values = {
         visibility: model.visibility || 'private',
         name: model.name || '',
         description: model.description || '',
@@ -84,12 +96,13 @@ const EditModelPage = () => {
         apiKey: model.apiKey || '',
         preset: model.preset || 'Other',
         config: model.config || [],
-      });
+      };
+      form.reset(values);
+      setOriginalValues(values);
     }
   }, [model, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('FORM VALUES', values);
     updateModel(values);
   };
 
@@ -157,6 +170,14 @@ const EditModelPage = () => {
     }
   };
 
+  const handleVisibilityChange = () => {
+    const newVisibility = model?.visibility === 'private' ? 'public' : 'private';
+    updateModel({
+      visibility: newVisibility,
+    });
+    setShowVisibilityDialog(false);
+  };
+
   if (fetchError) {
     return (
       <div className="flex-1 flex text-muted-foreground">
@@ -174,184 +195,372 @@ const EditModelPage = () => {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center gap-5 overscroll-y-auto">
-      <Card className="relative size-fit mx-4 my-16 px-8 max-w-2xl w-full bg-card/80">
-        <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-50" />
-        <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-40" />
-        <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
-        <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-60" />
-        <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-40" />
-        <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-30" />
+    <>
+      <div className="flex-1 flex flex-col justify-center items-center gap-5 overscroll-y-auto">
+        <Card className="relative size-fit m-4 px-8 max-w-2xl w-full bg-card/80">
+          <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-50" />
+          <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-40" />
+          <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
+          <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-60" />
+          <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-40" />
+          <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-30" />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <CardHeader className="text-center text-4xl font-bold">
-              Edit Model
-            </CardHeader>
-            <CardContent>
-              <div className="m-auto w-full space-y-5">
-                <div className="items-center justify-center relative space-y-10">
-                  <div className="space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Name</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="Chat VelonY" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Description</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <TextareaAutosize
-                                placeholder="Best LLM in the world."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="llmModel"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">LLM Model</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="gpt-4o" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="endpointUrl"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Endpoint URL</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="https://api.openai.com/v1" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="apiKey"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">API Key</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input type="password" placeholder="sk-..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
+          <Button
+            asChild
+            variant="link"
+            className="absolute top-0 right-0 text-blue-400 font-normal"
+          >
+            <Link href={model?.url}>
+              view
+            </Link>
+          </Button>
 
-                    <div className="flex items-baseline">
-                      <FormLabel className="w-32 flex-shrink-0 text-md">Config</FormLabel>
-                      <div className="flex flex-col flex-1 gap-2">
-                        {form.watch('config').map((field, index) => (
-                          <div key={index} className="flex items-center gap-1">
-                            <div className="flex">
-                              <Input
-                                className="w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
-                                value={field.name}
-                                onChange={(e) => {
-                                  const newConfigField = [...form.getValues('config')];
-                                  newConfigField[index].name = e.target.value;
-                                  form.setValue('config', newConfigField);
-                                }}
-                                placeholder="Field name"
-                              />
-                              <Select
-                                value={field.type}
-                                onValueChange={(value: ModelFieldType) => {
-                                  const newConfigField = [...form.getValues('config')];
-                                  newConfigField[index].type = value;
-                                  newConfigField[index].value = value === 'boolean' ? false : value === 'string' ? '' : 0;
-                                  form.setValue('config', newConfigField);
-                                }}
-                              >
-                                <SelectTrigger className="w-25 flex-shrink-0 rounded-l-none">
-                                  <SelectValue placeholder="Field type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="string">String</SelectItem>
-                                  <SelectItem value="float">Float</SelectItem>
-                                  <SelectItem value="integer">Integer</SelectItem>
-                                  <SelectItem value="boolean">Boolean</SelectItem>
-                                </SelectContent>
-                              </Select>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <CardHeader className="flex">
+                {model?.visibility === 'default'
+                  ? (
+                      <Avatar className="size-15 mr-4 rounded-full">
+                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
+                          <Cpu size="30" className="text-white" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )
+                  : (
+                      <Avatar className="size-24 mr-8 rounded-full">
+                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
+                          <Cpu size="48" className="text-white" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                <div className="">
+                  <div className="text-2xl font-bold">
+                    {model?.name}
+                  </div>
+                  <div>
+                    {model?.visibility === 'private'
+                      && (
+                        <div className="">
+                          <Badge className="bg-secondary cursor-default border-border">
+                            <span className="bg-gray-500 rounded-full aspect-square h-2 w-2" />
+                            private
+                          </Badge>
+                          <Button
+                            disabled={isUpdatePending || !!hasChanges}
+                            type="button"
+                            className="text-red-600 font-normal"
+                            size="xxs"
+                            variant="link"
+                            onClick={() => setShowVisibilityDialog(true)}
+                          >
+                            make public
+                          </Button>
+                        </div>
+                      )}
+                    {model?.visibility === 'public'
+                      && (
+                        <>
+                          <Badge className="bg-secondary cursor-default border-border">
+                            <span className="bg-green-400 rounded-full aspect-square h-2 w-2" />
+                            public
+                          </Badge>
+                          <Button
+                            disabled={isUpdatePending || !!hasChanges}
+                            type="button"
+                            className="text-red-600 font-normal"
+                            size="xxs"
+                            variant="link"
+                            onClick={() => setShowVisibilityDialog(true)}
+                          >
+                            make private
+                          </Button>
+                        </>
+                      )}
+                    {model?.visibility === 'default'
+                      && (
+                        <Badge className="bg-secondary cursor-default border-border">
+                          <span className="bg-yellow-400 aspect-square h-2 w-2" />
+                          default
+                        </Badge>
+                      )}
+
+                  </div>
+                  <div className="flex gap-5 mt-2">
+                    {model?.visibility !== 'default'
+                      && (
+                        <div>
+                          <span>
+                            {model?.subscriberCount}
+                          </span>
+                          <span className="text-muted-foreground"> subscribers</span>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                <div className="m-auto w-full space-y-5">
+                  <div className="items-center justify-center relative space-y-10">
+                    <div className="space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="flex items-baseline">
+                            <FormLabel className="w-30 text-md">
+                              Name
+                              {dirtyFields.name && '*'}
+                            </FormLabel>
+                            <div className="flex-1">
+                              <FormControl>
+                                <Input placeholder="Chat VelonY" {...field} />
+                              </FormControl>
+                              <FormMessage />
                             </div>
-                            {renderValueInput(field, index)}
-                            <Button
-                              type="button"
-                              onClick={() => onConfigFieldRemove(index)}
-                              variant="ghost"
-                              size="xs"
-                            >
-                              <X />
-                            </Button>
-                          </div>
-                        ))}
-                        <div className="flex">
-                          <div>
-                            <Button
-                              className="bg-inherit"
-                              variant="outline"
-                              type="button"
-                              onClick={() => onConfigFieldPush({
-                                type: 'string',
-                                name: '',
-                                value: '',
-                              })}
-                            >
-                              <Plus />
-                              Add Field
-                            </Button>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem className="flex items-baseline">
+                            <FormLabel className="w-30 text-md">
+                              Description
+                              {dirtyFields.description && '*'}
+                            </FormLabel>
+                            <div className="flex-1">
+                              <FormControl>
+                                <TextareaAutosize
+                                  placeholder="Best LLM in the world."
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="llmModel"
+                        render={({ field }) => (
+                          <FormItem className="flex items-baseline">
+                            <FormLabel className="w-30 text-md">
+                              Model
+                              {dirtyFields.llmModel && '*'}
+                            </FormLabel>
+                            <div className="flex-1">
+                              <FormControl>
+                                <Input placeholder="gpt-4o" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="endpointUrl"
+                        render={({ field }) => (
+                          <FormItem className="flex items-baseline">
+                            <FormLabel className="w-30 text-md">
+                              Endpoint URL
+                              {dirtyFields.endpointUrl && '*'}
+                            </FormLabel>
+                            <div className="flex-1">
+                              <FormControl>
+                                <Input placeholder="https://api.openai.com/v1" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="apiKey"
+                        render={({ field }) => (
+                          <FormItem className="flex items-baseline">
+                            <FormLabel className="w-30 text-md">
+                              API Key
+                              {dirtyFields.apiKey && '*'}
+                            </FormLabel>
+                            <div className="flex-1">
+                              <FormControl>
+                                <Input type="password" placeholder="sk-..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex items-baseline">
+                        <FormLabel className="w-32 flex-shrink-0 text-md">
+                          Config
+                          {dirtyFields.config && '*'}
+                        </FormLabel>
+                        <div className="flex flex-col flex-1 gap-2">
+                          {form.watch('config').map((field, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              <div className="flex">
+                                <Input
+                                  className="w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
+                                  value={field.name}
+                                  onChange={(e) => {
+                                    const newConfigField = [...form.getValues('config')];
+                                    newConfigField[index].name = e.target.value;
+                                    form.setValue('config', newConfigField);
+                                  }}
+                                  placeholder="Field name"
+                                />
+                                <Select
+                                  value={field.type}
+                                  onValueChange={(value: ModelFieldType) => {
+                                    const newConfigField = [...form.getValues('config')];
+                                    newConfigField[index].type = value;
+                                    newConfigField[index].value = value === 'boolean' ? false : value === 'string' ? '' : 0;
+                                    form.setValue('config', newConfigField);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-25 flex-shrink-0 rounded-l-none">
+                                    <SelectValue placeholder="Field type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="string">String</SelectItem>
+                                    <SelectItem value="float">Float</SelectItem>
+                                    <SelectItem value="integer">Integer</SelectItem>
+                                    <SelectItem value="boolean">Boolean</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {renderValueInput(field, index)}
+                              <Button
+                                type="button"
+                                onClick={() => onConfigFieldRemove(index)}
+                                variant="ghost"
+                                size="xs"
+                              >
+                                <X />
+                              </Button>
+                            </div>
+                          ))}
+                          <div className="flex">
+                            <div>
+                              <Button
+                                className="bg-inherit"
+                                variant="outline"
+                                type="button"
+                                onClick={() => onConfigFieldPush({
+                                  type: 'string',
+                                  name: '',
+                                  value: '',
+                                })}
+                              >
+                                <Plus />
+                                Add Field
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter className="justify-end">
-              <div>
-                <Button type="submit" disabled={isUpdatePending} className="w-30">
-                  {isUpdatePending ? 'Updating...' : 'Update'}
-                </Button>
-              </div>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
-    </div>
+              </CardContent>
+              <CardFooter className="justify-end">
+                <div>
+                  <Button type="submit" disabled={isUpdatePending} className="w-30">
+                    {isUpdatePending ? 'Updating...' : 'Update'}
+                  </Button>
+                </div>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
+      </div>
+
+      <AlertDialog open={showVisibilityDialog} onOpenChange={setShowVisibilityDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="relative">
+            <AlertDialogCancel asChild className="size-8" onClick={() => setShowVisibilityDialog(false)}>
+              <Button className="absolute right-0 top-0 border-none">
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogTitle>
+              Make
+              {' '}
+              {model?.name}
+              {' '}
+              {model?.visibility === 'private' ? 'public' : 'private'}
+              ?
+            </AlertDialogTitle>
+            <div className="space-y-4">
+              {model?.visibility === 'private'
+                ? (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          <strong>WARNING: This will make your model discoverable to everyone.</strong>
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <p>Once public, anyone will be able to:</p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li>See your model&apos;s name and description in marketplace searches</li>
+                          <li>Subscribe and use your model</li>
+                          <li>Generate responses using your model</li>
+                          <li>Share links to your model publicly</li>
+                        </ul>
+                      </div>
+                    </>
+                  )
+                : (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          <strong>WARNING: This will permanently remove ALL subscribers from your model.</strong>
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <p>This action will:</p>
+                        <ul className="list-disc ml-6 space-y-1">
+                          <li>Remove all current subscribers immediately</li>
+                          <li>Users will lose access to this model</li>
+                          <li>Make your model undiscoverable in the marketplace</li>
+                          <li>Break all existing public links</li>
+                        </ul>
+                      </div>
+
+                      <Alert>
+                        <AlertDescription>
+                          <strong>This action cannot be undone.</strong>
+                          {' '}
+                          If you make this model public again later, you will have zero subscribers. All previous subscribers will be permanently lost.
+                        </AlertDescription>
+                      </Alert>
+                    </>
+                  )}
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              className="flex-1 bg-secondary text-red-400 hover:bg-red-700 hover:text-white"
+              onClick={handleVisibilityChange}
+            >
+              Make this model
+              {' '}
+              {model?.visibility === 'private' ? 'public' : 'private'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

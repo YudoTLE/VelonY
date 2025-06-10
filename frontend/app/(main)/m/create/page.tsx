@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 
 import { X, Plus } from 'lucide-react';
 
@@ -129,9 +129,12 @@ const CreateModelPage = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center gap-5 overscroll-y-auto">
+    <div className="flex-1 flex flex-col justify-center items-center overscroll-y-auto gap-10 p-8">
+      <div className="text-center text-4xl font-bold">
+        Create new Agent
+      </div>
 
-      <Card className="relative size-fit mx-4 my-16 px-8 max-w-2xl w-full bg-card/80">
+      <Card className="relative size-fit px-4 max-w-2xl w-full bg-card/80">
         <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-50" />
         <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-40" />
         <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
@@ -141,158 +144,149 @@ const CreateModelPage = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <CardHeader className="text-center text-4xl font-bold">
-              Create New Model
-
-            </CardHeader>
             <CardContent>
+              <div className="items-center justify-center relative space-y-2">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className="w-30 text-md">Name</FormLabel>
+                      <div className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Chat VelonY" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className="w-30 text-md">Description</FormLabel>
+                      <div className="flex-1">
+                        <FormControl>
+                          <TextareaAutosize
+                            placeholder="Best LLM in the world."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="llmModel"
+                  render={({ field }) => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className="w-30 text-md">Model</FormLabel>
+                      <div className="flex-1">
+                        <FormControl>
+                          <Input placeholder="gpt-4o" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endpointUrl"
+                  render={({ field }) => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className="w-30 text-md">Endpoint URL</FormLabel>
+                      <div className="flex-1">
+                        <FormControl>
+                          <Input placeholder="https://api.openai.com/v1" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="apiKey"
+                  render={({ field }) => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className="w-30 text-md">API Key</FormLabel>
+                      <div className="flex-1">
+                        <FormControl>
+                          <Input type="password" placeholder="sk-R2k7TnQ9ePdM8xLz1GvFJtWvE0AqYbZxJdR6OeKyB8HGJxqM" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <div className="m-auto w-full space-y-5">
-                <div className="items-center justify-center relative space-y-10">
-                  <div className="space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Name</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="Chat VelonY" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Description</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <TextareaAutosize
-                                placeholder="Best LLM in the world."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="llmModel"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">LLM Model</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="gpt-4o" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="endpointUrl"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">Endpoint URL</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input placeholder="https://api.openai.com/v1" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="apiKey"
-                      render={({ field }) => (
-                        <FormItem className="flex items-baseline">
-                          <FormLabel className="w-30 text-md">API Key</FormLabel>
-                          <div className="flex-1">
-                            <FormControl>
-                              <Input type="password" placeholder="sk-..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex items-baseline">
-                      <FormLabel className="w-32 flex-shrink-0 text-md">Config</FormLabel>
-                      <div className="flex flex-col flex-1 gap-2">
-                        {form.watch('config').map((field, index) => (
-                          <div key={index} className="flex items-center gap-1">
-                            <div className="flex">
-                              <Input
-                                className="w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
-                                value={field.name}
-                                onChange={(e) => {
-                                  const newConfigField = [...form.getValues('config')];
-                                  newConfigField[index].name = e.target.value;
-                                  form.setValue('config', newConfigField);
-                                }}
-                                placeholder="Field name"
-                              />
-                              <Select
-                                value={field.type}
-                                onValueChange={(value: ModelFieldType) => {
-                                  const newConfigField = [...form.getValues('config')];
-                                  newConfigField[index].type = value;
-                                  newConfigField[index].value = value === 'boolean' ? false : value === 'string' ? '' : 0;
-                                  form.setValue('config', newConfigField);
-                                }}
-                              >
-                                <SelectTrigger className="w-25 flex-shrink-0 rounded-l-none">
-                                  <SelectValue placeholder="Field type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="string">String</SelectItem>
-                                  <SelectItem value="float">Float</SelectItem>
-                                  <SelectItem value="integer">Integer</SelectItem>
-                                  <SelectItem value="boolean">Boolean</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {renderValueInput(field, index)}
-                            <Button
-                              type="button"
-                              onClick={() => onConfigFieldRemove(index)}
-                              variant="ghost"
-                              size="xs"
-                            >
-                              <X />
-                            </Button>
-                          </div>
-                        ))}
+                <div className="flex items-baseline">
+                  <FormLabel className="w-32 flex-shrink-0 text-md">Config</FormLabel>
+                  <div className="flex flex-col flex-1 gap-2">
+                    {form.watch('config').map((field, index) => (
+                      <div key={index} className="flex items-center gap-1">
                         <div className="flex">
-                          <div>
-                            <Button
-                              className="bg-inherit"
-                              variant="outline"
-                              type="button"
-                              onClick={() => onConfigFieldPush({
-                                type: 'string',
-                                name: '',
-                                value: '',
-                              })}
-                            >
-                              <Plus />
-                              Add Field
-                            </Button>
-                          </div>
+                          <Input
+                            className="w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
+                            value={field.name}
+                            onChange={(e) => {
+                              const newConfigField = [...form.getValues('config')];
+                              newConfigField[index].name = e.target.value;
+                              form.setValue('config', newConfigField);
+                            }}
+                            placeholder="Field name"
+                          />
+                          <Select
+                            value={field.type}
+                            onValueChange={(value: ModelFieldType) => {
+                              const newConfigField = [...form.getValues('config')];
+                              newConfigField[index].type = value;
+                              newConfigField[index].value = value === 'boolean' ? false : value === 'string' ? '' : 0;
+                              form.setValue('config', newConfigField);
+                            }}
+                          >
+                            <SelectTrigger className="w-25 flex-shrink-0 rounded-l-none">
+                              <SelectValue placeholder="Field type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="string">String</SelectItem>
+                              <SelectItem value="float">Float</SelectItem>
+                              <SelectItem value="integer">Integer</SelectItem>
+                              <SelectItem value="boolean">Boolean</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
+                        {renderValueInput(field, index)}
+                        <Button
+                          type="button"
+                          onClick={() => onConfigFieldRemove(index)}
+                          variant="ghost"
+                          size="xs"
+                        >
+                          <X />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex">
+                      <div>
+                        <Button
+                          className="bg-inherit"
+                          variant="outline"
+                          type="button"
+                          onClick={() => onConfigFieldPush({
+                            type: 'string',
+                            name: '',
+                            value: '',
+                          })}
+                        >
+                          <Plus />
+                          Add Field
+                        </Button>
                       </div>
                     </div>
                   </div>

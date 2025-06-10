@@ -83,7 +83,6 @@ export const processRawAgent = (
   const isSubscribed = !!config.selfId && config.selfId === raw.userId;
   const isEditable = isOwn && (raw.visibility !== 'default');
   const subscriberCount = raw.subscriberCount ?? 0;
-  const url = isEditable ? `/a/${raw.id}/edit` : `/a/${raw.id}`;
 
   return {
     ...raw,
@@ -91,7 +90,7 @@ export const processRawAgent = (
     isOwn,
     isSubscribed,
     isEditable,
-    url,
+    url: `/a/${raw.id}`,
     recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
@@ -113,7 +112,6 @@ export const processRawModel = (
   const isSubscribed = !!config.selfId && config.selfId === raw.userId;
   const isEditable = isOwn && (raw.visibility !== 'default');
   const subscriberCount = raw.subscriberCount ?? 0;
-  const url = isEditable ? `/m/${raw.id}/edit` : `/m/${raw.id}`;
 
   return {
     ...raw,
@@ -121,7 +119,7 @@ export const processRawModel = (
     isOwn,
     isSubscribed,
     isEditable,
-    url,
+    url: `/m/${raw.id}`,
     recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),

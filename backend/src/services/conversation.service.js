@@ -68,12 +68,22 @@ export default function ConversationService({ repo, io }) {
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const [messages, agent, model, participants] = await Promise.all([
+      const [messages, agent_, model_, participants] = await Promise.all([
         repo.message.listForConversation(conversationId, { maxToken: 1000 }),
-        repo.agent.get(agentId),
-        repo.model.get(modelId),
+        repo.agent.select({ agentId }),
+        repo.model.select({ modelId }),
         repo.user.listForConversation(conversationId)
       ])
+      const agent = agent_[0]
+      const model = model_[0] 
+
+      const modelConfig = Object.fromEntries(
+        model.config.map(({ name, value }) => [name, value])
+      )
+
+      console.log('AGENT', agent)
+      console.log('MODEL', model)
+      console.log('MODEL CONFIG', modelConfig)
 
       const openai = new OpenAI({
         baseURL: model.endpointUrl,
@@ -122,7 +132,7 @@ export default function ConversationService({ repo, io }) {
       const payload = {
         model: model.llmModel,
         stream: true,
-        ...model.config,
+        ...modelConfig,
         messages: [
           systemPrompt,
           ...messageLogs,

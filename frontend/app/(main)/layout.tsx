@@ -14,7 +14,7 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
       <div className="flex h-screen w-screen">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <SidebarTrigger />
+          <SidebarTrigger className="absolute z-1000" />
           {children}
         </main>
       </div>

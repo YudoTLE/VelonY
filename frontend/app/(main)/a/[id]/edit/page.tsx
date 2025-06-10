@@ -1,12 +1,14 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useFetchAgentById, useUpdateAgentById } from '@/hooks/use-agents';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,14 +20,8 @@ import {
 } from '@/components/ui/form';
 import { TextareaAutosize } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-import { LoaderCircle, X } from 'lucide-react';
+import { LoaderCircle, X, Bot } from 'lucide-react';
 
 const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
@@ -54,8 +50,7 @@ const EditAgentPage = () => {
   const { mutate: updateAgent, isPending: isUpdatePending } = useUpdateAgentById(id);
 
   const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
-  const [pendingVisibility, setPendingVisibility] = useState<'private' | 'public' | null>(null);
-  const [pendingFormData, setPendingFormData] = useState<z.infer<typeof formSchema> | null>(null);
+  const [originalValues, setOriginalValues] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,56 +62,42 @@ const EditAgentPage = () => {
     },
   });
 
+  const currentValues = form.watch();
+  const hasChanges = originalValues && JSON.stringify(currentValues) !== JSON.stringify(originalValues);
+  const { formState: { dirtyFields } } = form;
+
   useEffect(() => {
     if (agent) {
-      form.reset({
+      const values = {
         visibility: agent.visibility || 'private',
         name: agent.name || '',
         description: agent.description || '',
         systemPrompt: agent.systemPrompt || '',
-      });
+      };
+      form.reset(values);
+      setOriginalValues(values);
     }
   }, [agent, form]);
 
-  const handleVisibilityChange = (newVisibility: string, formData: z.infer<typeof formSchema>) => {
-    const currentVisibility = agent?.visibility;
-
-    if (currentVisibility && currentVisibility !== newVisibility) {
-      setPendingVisibility(newVisibility as 'private' | 'public');
-      setPendingFormData(formData);
-      setShowVisibilityDialog(true);
-      return false;
-    }
-
-    return true;
-  };
-
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('FORM VALUES', values);
-
-    if (!handleVisibilityChange(values.visibility, values)) {
-      return;
-    }
-
     updateAgent(values);
   };
 
-  const confirmVisibilityChange = () => {
-    if (pendingFormData) {
-      updateAgent(pendingFormData);
+  const onRevert = () => {
+    if (originalValues) {
+      form.reset(originalValues);
     }
-    setShowVisibilityDialog(false);
-    setPendingVisibility(null);
-    setPendingFormData(null);
   };
 
-  const cancelVisibilityChange = () => {
-    if (agent) {
-      form.setValue('visibility', agent.visibility || 'private');
-    }
+  const handleVisibilityChange = () => {
+    const newVisibility = agent?.visibility === 'private' ? 'public' : 'private';
+    updateAgent({
+      visibility: newVisibility,
+      name: agent?.name || '',
+      description: agent?.description || '',
+      systemPrompt: agent?.systemPrompt || '',
+    });
     setShowVisibilityDialog(false);
-    setPendingVisibility(null);
-    setPendingFormData(null);
   };
 
   if (fetchError) {
@@ -137,8 +118,8 @@ const EditAgentPage = () => {
 
   return (
     <>
-      <div className="flex flex-col justify-center items-center gap-5 overscroll-y-auto">
-        <Card className="relative size-fit mx-4 my-16 px-8 max-w-2xl w-full bg-card/80">
+      <div className="flex-1 flex flex-col justify-center items-center overscroll-y-auto">
+        <Card className="relative size-fit m-4 px-4 max-w-2xl w-full bg-card/80">
           <div className="absolute -top-6 -left-6 size-32 bg-emerald-400 rounded-full -z-10 blur-xl opacity-50" />
           <div className="absolute -top-12 -left-12 size-64 bg-green-500 rounded-full -z-10 blur-2xl opacity-40" />
           <div className="absolute -top-20 -left-20 size-128 bg-teal-500 rounded-full -z-10 blur-3xl opacity-30" />
@@ -146,97 +127,184 @@ const EditAgentPage = () => {
           <div className="absolute -bottom-12 -right-12 size-64 bg-purple-500 rounded-full -z-10 blur-2xl opacity-40" />
           <div className="absolute -bottom-20 -right-20 size-128 bg-indigo-600 rounded-full -z-10 blur-3xl opacity-30" />
 
+          <Button
+            asChild
+            variant="link"
+            className="absolute top-0 right-0 text-blue-400 font-normal"
+          >
+            <Link href={agent?.url}>
+              view
+            </Link>
+          </Button>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <CardHeader className="text-center text-4xl font-bold">
-                Edit Agent
-              </CardHeader>
-              <CardContent>
-                <div className="m-auto w-full space-y-5">
-                  <div className="items-center justify-center relative space-y-10">
-                    <div className="space-y-2">
-                      <FormField
-                        control={form.control}
-                        name="visibility"
-                        render={({ field }) => (
-                          <FormItem className="flex items-baseline">
-                            <FormLabel className="w-30 text-md">Visibility</FormLabel>
-                            <div className="flex-1">
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select visibility" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="private">Private</SelectItem>
-                                  <SelectItem value="public">Public</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className="flex items-baseline">
-                            <FormLabel className="w-30 text-md">Name</FormLabel>
-                            <div className="flex-1">
-                              <FormControl>
-                                <Input placeholder="Virgo" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem className="flex items-baseline">
-                            <FormLabel className="w-30 text-md">Description</FormLabel>
-                            <div className="flex-1">
-                              <FormControl>
-                                <TextareaAutosize
-                                  placeholder="Cool AI assistant."
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="systemPrompt"
-                        render={({ field }) => (
-                          <FormItem className="flex items-baseline">
-                            <FormLabel className="w-30 text-md">System Prompt</FormLabel>
-                            <div className="flex-1">
-                              <FormControl>
-                                <TextareaAutosize
-                                  placeholder="You are a helpful assistant."
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+              <CardHeader className="flex">
+                {agent?.visibility === 'default'
+                  ? (
+                      <Avatar className="size-15 mr-4 rounded-full">
+                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
+                          <Bot size="30" className="text-white" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )
+                  : (
+                      <Avatar className="size-24 mr-8 rounded-full">
+                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
+                          <Bot size="48" className="text-white" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                <div className="">
+                  <div className="text-2xl font-bold">
+                    {agent?.name}
+                  </div>
+                  <div>
+                    {agent?.visibility === 'private'
+                      && (
+                        <div className="">
+                          <Badge className="bg-secondary cursor-default border-border">
+                            <span className="bg-gray-500 rounded-full aspect-square h-2 w-2" />
+                            private
+                          </Badge>
+                          <Button
+                            disabled={isUpdatePending || !!hasChanges}
+                            type="button"
+                            className="text-red-600 font-normal"
+                            size="xxs"
+                            variant="link"
+                            onClick={() => setShowVisibilityDialog(true)}
+                          >
+                            make public
+                          </Button>
+                        </div>
+                      )}
+                    {agent?.visibility === 'public'
+                      && (
+                        <>
+                          <Badge className="bg-secondary cursor-default border-border">
+                            <span className="bg-green-400 rounded-full aspect-square h-2 w-2" />
+                            public
+                          </Badge>
+                          <Button
+                            disabled={isUpdatePending || !!hasChanges}
+                            type="button"
+                            className="text-red-600 font-normal"
+                            size="xxs"
+                            variant="link"
+                            onClick={() => setShowVisibilityDialog(true)}
+                          >
+                            make private
+                          </Button>
+                        </>
+                      )}
+                    {agent?.visibility === 'default'
+                      && (
+                        <Badge className="bg-secondary cursor-default border-border">
+                          <span className="bg-yellow-400 aspect-square h-2 w-2" />
+                          default
+                        </Badge>
+                      )}
+
+                  </div>
+                  <div className="flex gap-5 mt-2">
+                    {agent?.visibility !== 'default'
+                      && (
+                        <div>
+                          <span>
+                            {agent?.subscriberCount}
+                          </span>
+                          <span className="text-muted-foreground"> subscribers</span>
+                        </div>
+                      )}
                   </div>
                 </div>
+              </CardHeader>
+
+              <CardContent>
+                <div className="items-center justify-center relative space-y-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-30 text-md">
+                          Name
+                          {dirtyFields.name && '*'}
+                        </FormLabel>
+                        <div className="flex-1">
+                          <FormControl>
+                            <Input placeholder="Virgo" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-30 text-md">
+                          Description
+                          {dirtyFields.description && '*'}
+                        </FormLabel>
+                        <div className="flex-1">
+                          <FormControl>
+                            <TextareaAutosize
+                              placeholder="Cool AI assistant."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="systemPrompt"
+                    render={({ field }) => (
+                      <FormItem className="flex items-baseline">
+                        <FormLabel className="w-30 text-md">
+                          System Prompt
+                          {dirtyFields.systemPrompt && '*'}
+                        </FormLabel>
+                        <div className="flex-1">
+                          <FormControl>
+                            <TextareaAutosize
+                              placeholder="You are a helpful assistant."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                </div>
               </CardContent>
-              <CardFooter className="justify-end">
+              <CardFooter className="justify-end gap-3">
                 <div>
-                  <Button type="submit" disabled={isUpdatePending} className="w-30">
-                    {isUpdatePending ? 'Updating...' : 'Update'}
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    disabled={isUpdatePending || !hasChanges}
+                    className="w-30"
+                    onClick={onRevert}
+                  >
+                    Revert
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={isUpdatePending || !hasChanges}
+                    className="w-30"
+                  >
+                    {isUpdatePending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </CardFooter>
@@ -248,7 +316,7 @@ const EditAgentPage = () => {
       <AlertDialog open={showVisibilityDialog} onOpenChange={setShowVisibilityDialog}>
         <AlertDialogContent>
           <AlertDialogHeader className="relative">
-            <AlertDialogCancel asChild className="size-8" onClick={cancelVisibilityChange}>
+            <AlertDialogCancel asChild className="size-8" onClick={() => setShowVisibilityDialog(false)}>
               <Button className="absolute right-0 top-0 border-none">
                 <X className="h-4 w-4" />
               </Button>
@@ -258,11 +326,11 @@ const EditAgentPage = () => {
               {' '}
               {agent?.name}
               {' '}
-              {pendingVisibility}
+              {agent?.visibility === 'private' ? 'public' : 'private'}
               ?
             </AlertDialogTitle>
             <div className="space-y-4">
-              {pendingVisibility === 'public'
+              {agent?.visibility === 'private'
                 ? (
                     <>
                       <Alert variant="destructive">
@@ -314,11 +382,11 @@ const EditAgentPage = () => {
           <AlertDialogFooter>
             <AlertDialogAction
               className="flex-1 bg-secondary text-red-400 hover:bg-red-700 hover:text-white"
-              onClick={confirmVisibilityChange}
+              onClick={handleVisibilityChange}
             >
               Make this agent
               {' '}
-              {pendingVisibility}
+              {agent?.visibility === 'private' ? 'public' : 'private'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

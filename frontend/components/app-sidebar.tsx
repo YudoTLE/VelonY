@@ -42,6 +42,8 @@ import {
   Settings,
   SquarePlus,
   Search,
+  Hammer,
+  Wrench,
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -92,8 +94,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <div className="flex gap-2 pb-2">
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
                   <Link href="/a/create">
-                    <SquarePlus />
-                    New
+                    <Hammer />
+                    Create
                   </Link>
                 </Button>
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
@@ -116,8 +118,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <div className="flex gap-2 pb-2">
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
                   <Link href="/m/create">
-                    <SquarePlus />
-                    New
+                    <Wrench />
+                    Create
                   </Link>
                 </Button>
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
