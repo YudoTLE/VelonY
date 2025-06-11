@@ -5,18 +5,17 @@ import { useMe } from '@/hooks/use-users';
 import { processRawAgent, processRawAgents } from '@/lib/transformers';
 import api from '@/lib/axios';
 
-export const useFetchAgents = () => {
+export const useFetchAgents = (query = '') => {
   const { data: me } = useMe();
 
-  return useQuery({
-    queryKey: ['agents'],
-    queryFn: async () => {
-      if (!me) {
-        throw new Error('Unauthenticated');
-      }
+  const resolvedQuery = query.replaceAll('<me>', me?.id || '');
 
-      const { data: agentsRaw } = await api.get<AgentRaw[]>('agents');
-      const agents = processRawAgents(agentsRaw, { selfId: me.id });
+  return useQuery({
+    enabled: !!me,
+    queryKey: ['agents', resolvedQuery],
+    queryFn: async () => {
+      const { data: agentsRaw } = await api.get<AgentRaw[]>(`agents?${resolvedQuery}`);
+      const agents = processRawAgents(agentsRaw, { selfId: me!.id });
       agents.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
       return agents;
@@ -24,6 +23,10 @@ export const useFetchAgents = () => {
     staleTime: 1000 * 60 * 5,
   });
 };
+export const useFetchDefaultAgents = () => useFetchAgents('visibility=default');
+export const useFetchSubscribedAgents = () => useFetchAgents('user_id=<me>');
+export const useFetchPrivateAgents = () => useFetchAgents('creator_id=<me>');
+export const useFetchPublicAgents = () => useFetchAgents('visibility=public');
 
 export const useUpdateAgentById = (agentId: string) => {
   const queryClient = useQueryClient();
@@ -42,12 +45,16 @@ export const useUpdateAgentById = (agentId: string) => {
     },
 
     onSuccess: (updatedAgent) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
         ['agent', agentId],
         () => updatedAgent,
       );
       queryClient.setQueryData(
-        ['agents'],
+        ['agents', `creator_id=${me.id}`],
         (oldCache?: Agent[]) => {
           const old: Agent[] = oldCache || [];
           const newAgents = [...old];
@@ -101,14 +108,11 @@ export const useFetchAgentById = (agentId: string) => {
   const { data: me } = useMe();
 
   return useQuery({
+    enabled: !!me,
     queryKey: ['agent', agentId],
     queryFn: async () => {
-      if (!me) {
-        throw new Error('Unauthenticated');
-      }
-
       const { data: agentRaw } = await api.get<AgentRaw>(`agents/${agentId}`);
-      const agent = processRawAgent(agentRaw, { selfId: me.id });
+      const agent = processRawAgent(agentRaw, { selfId: me!.id });
 
       return agent;
     },
@@ -134,19 +138,23 @@ export const useToggleAgentSubscriptionById = (agentId: string) => {
       return updatedAgent;
     },
     onSuccess: (updatedAgent) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
         ['agent', agentId],
         () => updatedAgent,
       );
       queryClient.setQueryData(
-        ['agents'],
+        ['agents', `user_id=${me.id}`],
         (oldCache?: Agent[]) => {
           const old: Agent[] = oldCache ?? [];
           const newAgents = [...old];
 
           const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
           if (at !== -1) {
-            newAgents[at] = updatedAgent;
+            newAgents.splice(at, 1);
           }
           else {
             newAgents.unshift(updatedAgent);

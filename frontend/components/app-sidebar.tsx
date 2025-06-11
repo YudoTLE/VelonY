@@ -99,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Link>
                 </Button>
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
-                  <Link href="/">
+                  <Link href="/explore">
                     <Search />
                     Explore
                   </Link>
@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Link>
                 </Button>
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
-                  <Link href="/">
+                  <Link href="/explore">
                     <Search />
                     Explore
                   </Link>

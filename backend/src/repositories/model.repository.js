@@ -4,26 +4,26 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function ModelRepository() {
   return {
-    async select({ modelId, creatorId, userId, visibility }) {
+    async select(query) {
       const { supabase } = getContext()
 
-      let query = supabase
+      let dbQuery = supabase
         .from('enriched_models')
         .select()
-      if (modelId != null) {
-        query = query.eq('id', modelId)
+      if (query.model_id != null) {
+        dbQuery = dbQuery.eq('id', query.model_id)
       }
-      if (creatorId != null) {
-        query = query.eq('creator_id', creatorId)
+      if (query.creator_id != null) {
+        dbQuery = dbQuery.eq('creator_id', query.creator_id)
       }
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (query.user_id != null) {
+        dbQuery = dbQuery.eq('user_id', query.user_id)
       }
-      if (visibility != null) {
-        query = query.eq('visibility', visibility)
+      if (query.visibility != null) {
+        dbQuery = dbQuery.eq('visibility', query.visibility)
       }
 
-      const { data, error } = await query
+      const { data, error } = await dbQuery
 
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)

@@ -2,26 +2,12 @@ import { getContext } from '../lib/async-local-storage.js'
 
 export default function ModelService({ repo }) {
   return {
-    async list() {
+    async list(query) {
       const { user } = getContext()
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const [userModels, subscribedModels, defaultModels] = await Promise.all([
-        repo.model.select({ creatorId: user.sub }),
-        repo.model.select({ userId: user.sub }),
-        repo.model.select({ visibility: 'default' })
-      ])
-    
-      const combined = [...userModels, ...subscribedModels, ...defaultModels]
-      const unique = Object.values(
-        combined.reduce((acc, model) => {
-          acc[model.id] = model
-          return acc
-        }, {})
-      )
-    
-      return unique
+      return await repo.model.select(query)
     },
 
     async get(modelId) {
@@ -29,7 +15,7 @@ export default function ModelService({ repo }) {
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const model = (await repo.model.select({ modelId }))[0]
+      const model = (await repo.model.select({ model_id: modelId }))[0]
       if (!model) {
         throw { status: 404, message: 'Model not found' }
       }
@@ -68,7 +54,7 @@ export default function ModelService({ repo }) {
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
       await repo.modelSubscription.insert({ userId, modelId })
-      return (await repo.model.select({ userId, modelId }))[0]
+      return (await repo.model.select({ user_id: userId, model_id: modelId }))[0]
     },
 
     async removeSubscription({ userId, modelId }) {
@@ -77,7 +63,7 @@ export default function ModelService({ repo }) {
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
       await repo.modelSubscription.delete({ userId, modelId })
-      return (await repo.model.select({ modelId }))[0]
+      return (await repo.model.select({ model_id: modelId }))[0]
     },
   }
 }

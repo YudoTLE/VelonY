@@ -1,8 +1,10 @@
 export default function AgentController({ service, log }) {
   return {
     async list(request, reply) {
+      const { query } = request
+
       try {
-        const data = await service.list()
+        const data = await service.list(query)
         reply.code(200).send(data)
       } catch (err) {
         log.error(err)

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Bot, Cpu } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -111,7 +111,7 @@ export const MessageInput = ({
     <div className={cn('z-25 relative w-full max-w-2xl mx-auto group px-3', className)}>
       <div className="absolute inset-0 inset-x-2 inset-y-2 group-focus-within:inset-x-0 group-focus-within:inset-y-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-xl blur-xl opacity-30 group-focus-within:opacity-70 transition transition-all-200 animate-tilt" />
 
-      <Card className="relative z-25 w-full py-4 gap-3 rounded-3xl shadow-lg backdrop-blur-sm bg-card/50 group-focus-within:bg-card/85">
+      <Card className="relative z-25 w-full py-4 gap-3 rounded-3xl bg-card/80 group-focus-within:bg-card/100">
         <CardContent>
           <ScrollArea
             className="flex flex-col flex-1 grow-1 basis-1 overflow-y-auto"
@@ -139,9 +139,10 @@ export const MessageInput = ({
               !isFetchAgentPending && 'opacity-100',
             )}
             >
+              <Bot />
               <SelectValue placeholder="Agent" />
             </SelectTrigger>
-            <SelectContent className="backdrop-blur-md bg-inherit">
+            <SelectContent>
               {agents.map((agent) => {
                 return (
                   <SelectItem
@@ -160,9 +161,10 @@ export const MessageInput = ({
               !isFetchModelPending && 'opacity-100',
             )}
             >
+              <Cpu />
               <SelectValue placeholder="Model" />
             </SelectTrigger>
-            <SelectContent className="backdrop-blur-md bg-inherit">
+            <SelectContent>
               {models.map((model) => {
                 return (
                   <SelectItem

@@ -5,18 +5,17 @@ import { useMe } from '@/hooks/use-users';
 import { processRawModels, processRawModel } from '@/lib/transformers';
 import api from '@/lib/axios';
 
-export const useFetchModels = () => {
+export const useFetchModels = (query = '') => {
   const { data: me } = useMe();
 
-  return useQuery({
-    queryKey: ['models'],
-    queryFn: async () => {
-      if (!me) {
-        throw new Error('Unauthenticated');
-      }
+  const resolvedQuery = query.replaceAll('<me>', me?.id || '');
 
-      const { data: modelsRaw } = await api.get<ModelRaw[]>('models');
-      const models = processRawModels(modelsRaw, { selfId: me.id });
+  return useQuery({
+    enabled: !!me,
+    queryKey: ['models', resolvedQuery],
+    queryFn: async () => {
+      const { data: modelsRaw } = await api.get<ModelRaw[]>(`models?${resolvedQuery}`);
+      const models = processRawModels(modelsRaw, { selfId: me!.id });
       models.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
       return models;
@@ -24,6 +23,10 @@ export const useFetchModels = () => {
     staleTime: 1000 * 60 * 5,
   });
 };
+export const useFetchDefaultModels = () => useFetchModels('visibility=default');
+export const useFetchSubscribedModels = () => useFetchModels('user_id=<me>');
+export const useFetchPrivateModels = () => useFetchModels('creator_id=<me>');
+export const useFetchPublicModels = () => useFetchModels('visibility=public');
 
 export const useUpdateModelById = (modelId: string) => {
   const queryClient = useQueryClient();
@@ -42,12 +45,16 @@ export const useUpdateModelById = (modelId: string) => {
     },
 
     onSuccess: (updatedModel) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
         ['model', modelId],
         () => updatedModel,
       );
       queryClient.setQueryData(
-        ['models'],
+        ['models', `creator_id=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache || [];
           const newModels = [...old];
@@ -101,16 +108,11 @@ export const useFetchModelById = (modelId: string) => {
   const { data: me } = useMe();
 
   return useQuery({
+    enabled: !!me,
     queryKey: ['model', modelId],
     queryFn: async () => {
-      if (!me) {
-        throw new Error('Unauthenticated');
-      }
-
       const { data: modelRaw } = await api.get<ModelRaw>(`models/${modelId}`);
-      const model = processRawModel(modelRaw, { selfId: me.id });
-
-      console.log('MODEL KONTOL', model);
+      const model = processRawModel(modelRaw, { selfId: me!.id });
 
       return model;
     },
@@ -136,12 +138,16 @@ export const useToggleModelSubscriptionById = (modelId: string) => {
       return updatedModel;
     },
     onSuccess: (updatedModel) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
         ['model', modelId],
         () => updatedModel,
       );
       queryClient.setQueryData(
-        ['models'],
+        ['models', `user_id=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache ?? [];
           const newModels = [...old];

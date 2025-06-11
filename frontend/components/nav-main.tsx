@@ -2,8 +2,8 @@
 
 import { useSessionCollapseState } from '@/hooks/use-session-state';
 import { useFetchConversations, useDeleteConversation } from '@/hooks/use-conversations';
-import { useFetchAgents } from '@/hooks/use-agents';
-import { useFetchModels } from '@/hooks/use-models';
+import { useFetchDefaultAgents, useFetchSubscribedAgents, useFetchPrivateAgents } from '@/hooks/use-agents';
+import { useFetchDefaultModels, useFetchSubscribedModels, useFetchPrivateModels } from '@/hooks/use-models';
 
 import Link from 'next/link';
 
@@ -132,84 +132,84 @@ const SidebarNavSection = <T extends SidebarNavItem>({
 };
 
 export function NavDefaultAgents() {
-  const { data, isPending } = useFetchAgents();
+  const { data, isPending } = useFetchDefaultAgents();
 
   return (
     <SidebarNavSection
       title="Defaults"
       icon={Box}
       sessionKey="velony:sidebar:default-agents"
-      items={data?.filter(agent => agent.visibility === 'default') ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );
 }
 
 export function NavSubscribedAgents() {
-  const { data, isPending } = useFetchAgents();
+  const { data, isPending } = useFetchSubscribedAgents();
 
   return (
     <SidebarNavSection
       title="Subscriptions"
       icon={Flame}
       sessionKey="velony:sidebar:subscribed-agents"
-      items={data?.filter(agent => agent.isSubscribed) ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );
 }
 
 export function NavMyAgents() {
-  const { data, isPending } = useFetchAgents();
+  const { data, isPending } = useFetchPrivateAgents();
 
   return (
     <SidebarNavSection
       title="My Creations"
       icon={PencilLine}
       sessionKey="velony:sidebar:my-agents"
-      items={data?.filter(agent => agent.isOwn && agent.visibility !== 'default') ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );
 }
 
 export function NavMyModels() {
-  const { data, isPending } = useFetchModels();
+  const { data, isPending } = useFetchPrivateModels();
 
   return (
     <SidebarNavSection
       title="My Creations"
       icon={PencilLine}
       sessionKey="velony:sidebar:my-models"
-      items={data?.filter(model => model.isOwn && model.visibility !== 'default') ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );
 }
 
 export function NavDefaultModels() {
-  const { data, isPending } = useFetchModels();
+  const { data, isPending } = useFetchDefaultModels();
 
   return (
     <SidebarNavSection
       title="Defaults"
       icon={Box}
       sessionKey="velony:sidebar:default-models"
-      items={data?.filter(model => model.visibility === 'default') ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );
 }
 
 export function NavSubscribedModels() {
-  const { data, isPending } = useFetchModels();
+  const { data, isPending } = useFetchSubscribedModels();
 
   return (
     <SidebarNavSection
       title="Subscriptions"
       icon={Flame}
       sessionKey="velony:sidebar:subscribed-models"
-      items={data?.filter(model => model.isSubscribed) ?? []}
+      items={data ?? []}
       isLoading={isPending}
     />
   );

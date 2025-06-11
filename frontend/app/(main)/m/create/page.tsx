@@ -60,7 +60,6 @@ const CreateModelPage = () => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('FORM VALUES', values);
     mutate(values);
   };
 
@@ -131,16 +130,16 @@ const CreateModelPage = () => {
   return (
     <div className="flex-1 flex flex-col justify-center items-center overscroll-y-auto gap-10 p-8">
       <div className="text-center text-4xl font-bold">
-        Create new Agent
+        Create new Model
       </div>
 
       <Card className="relative size-fit px-4 max-w-2xl w-full bg-card/80">
-        <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-50" />
-        <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-40" />
-        <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-30" />
-        <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-60" />
-        <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-40" />
-        <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-30" />
+        <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-25" />
+        <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-20" />
+        <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-15" />
+        <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-25" />
+        <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-20" />
+        <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-15" />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
