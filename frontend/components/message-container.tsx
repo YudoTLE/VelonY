@@ -1,9 +1,15 @@
-import { useFetchMessages, useRealtimeSyncMessages, useLatestAddedMessage } from '@/hooks/use-messages';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRef, useEffect } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+import { useFetchMessages, useRealtimeSyncMessages, useLatestReceivedMessageTime } from '@/hooks/use-messages';
+
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { MessageBubble, MessageBubbleAI } from '@/components/message-bubble';
-import { cn } from '@/lib/utils';
+
 import { LoaderCircle } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 
 export const MessageContainer = ({
   conversationId,
@@ -17,28 +23,37 @@ export const MessageContainer = ({
   style?: React.CSSProperties
 }) => {
   const { data: messages, isPending, error } = useFetchMessages(conversationId);
-  const latestAddedMessage = useLatestAddedMessage(conversationId);
+  const latestReceivedMessageTime = useLatestReceivedMessageTime(conversationId);
 
   useRealtimeSyncMessages(conversationId);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    if (!scrollAreaRef?.current) {
-      return;
-    }
-
-    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
-    if (!viewport) {
-      return;
-    }
-
-    viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
+  const getScrollElement = () => {
+    if (!scrollAreaRef.current) return null;
+    return scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [latestAddedMessage]);
+  const virtualizer = useVirtualizer({
+    count: messages?.length ?? 0,
+    estimateSize: () => 100,
+    getScrollElement,
+    overscan: 3,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // const scrollToBottom = () => {
+  //   if (!scrollAreaRef?.current) return;
+  //   const viewport = getScrollElement();
+  //   if (!viewport) return;
+
+  //   viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
+  // };
+
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [latestReceivedMessageTime]);
 
   if (error) {
     return (
@@ -70,32 +85,53 @@ export const MessageContainer = ({
     >
       <div className="flex flex-col mx-auto py-3 px-5 max-w-4xl">
         <div
-          className="flex flex-col gap-1"
-          style={{ paddingBottom: `${scrollOverlap}px` }}
+          className="relative w-full"
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+          }}
         >
-          {messages.list.map((message, index) => {
-            const prevMessage = messages.list[index - 1] || null;
-            const nextMessage = messages.list[index + 1] || null;
+          <div
+            className="absolute w-full flex flex-col gap-1"
+            style={{
+              paddingBottom: `${scrollOverlap}px`,
+              transform: `translateY(${virtualItems[0]?.start ?? 0}px)`,
+            }}
+          >
+            {virtualItems.map(({ index, key }) => {
+              const message = messages[index];
+              const prevMessage = messages[index - 1] || null;
+              const nextMessage = messages[index + 1] || null;
 
-            if (message.type === 'user') {
-              return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  prevMessage={prevMessage}
-                  nextMessage={nextMessage}
-                />
-              );
-            }
-            if (message.type === 'agent') {
-              return (
-                <MessageBubbleAI
-                  key={message.id}
-                  message={message}
-                />
-              );
-            }
-          })}
+              if (message.type === 'user') {
+                return (
+                  <div
+                    key={key}
+                    data-index={index}
+                    ref={virtualizer.measureElement}
+                  >
+                    <MessageBubble
+                      message={message}
+                      prevMessage={prevMessage}
+                      nextMessage={nextMessage}
+                    />
+                  </div>
+                );
+              }
+              if (message.type === 'agent') {
+                return (
+                  <div
+                    key={key}
+                    data-index={index}
+                    ref={virtualizer.measureElement}
+                  >
+                    <MessageBubbleAI
+                      message={message}
+                    />
+                  </div>
+                );
+              }
+            })}
+          </div>
         </div>
       </div>
     </ScrollArea>

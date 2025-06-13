@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { Bot, Cpu } from 'lucide-react';
+import { Bot, Cpu, EllipsisVertical } from 'lucide-react';
 
 const CardSkeleton = () => {
   return (
@@ -68,7 +68,8 @@ const ExplorePage = () => {
               {!isFetchAgentsPending && agents?.map((agent, index) => {
                 return (
                   <Link key={index} href={agent.url}>
-                    <Card className="group w-84 border-none bg-secondary/50 hover:bg-secondary cursor-pointer transition-all duration-300 ease-in-out flex-shrink-0">
+                    <Card className="group relative w-84 border-none bg-secondary/50 hover:bg-secondary cursor-pointer transition-all duration-300 ease-in-out flex-shrink-0">
+                      <EllipsisVertical size="16" className="absolute right-3 top-3" />
                       <CardContent className="flex h-full space-y-2 translate-y-0.5 gap-4 group-hover:-translate-y-0.5 transition-all duration-300 ease-in-out">
                         <div>
                           <Avatar className="size-24 rounded-full">
@@ -95,8 +96,7 @@ const ExplorePage = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex flex-col gap-5">
+
         <div className="flex flex-col gap-2">
           <div>
             <Button

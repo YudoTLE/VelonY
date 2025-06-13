@@ -36,7 +36,7 @@ import {
 
 import { format } from 'date-fns';
 
-export const MessageBubble = (
+const MessageBubbleComponent = (
   { prevMessage, nextMessage, message }: { prevMessage?: Message, nextMessage?: Message, message: Message },
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId);
@@ -165,7 +165,7 @@ export const MessageBubble = (
   );
 };
 
-export const MessageBubbleAI = (
+const MessageBubbleAIComponent = (
   { message }: { message: Message },
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId);
@@ -290,3 +290,9 @@ export const MessageBubbleAI = (
     </div>
   );
 };
+
+MessageBubbleComponent.displayName = 'MessageBubble';
+MessageBubbleAIComponent.displayName = 'MessageBubbleAI';
+
+export const MessageBubble = React.memo(MessageBubbleComponent);
+export const MessageBubbleAI = React.memo(MessageBubbleAIComponent);

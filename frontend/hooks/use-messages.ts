@@ -10,32 +10,18 @@ import api from '@/lib/axios';
 export const useFetchMessages = (conversationId: string) => {
   const { data: me } = useMe();
 
-  const query = useQuery({
-    queryKey: ['messages', conversationId],
+  return useQuery({
+    enabled: !!me,
+    queryKey: ['conversations', conversationId, 'messages'],
     queryFn: async () => {
-      if (!me) {
-        throw new Error('Unauthenticated');
-      }
+      const { data: messagesRaw } = await api.get<MessageRaw[]>(`conversations/${conversationId}/messages`);
+      const messages = processRawMessages(messagesRaw, { selfId: me!.id, status: 'sent' });
 
-      const { data } = await api.get<MessageRaw[]>(`conversations/${conversationId}/messages`);
-
-      const list = processRawMessages(data, { selfId: me.id, status: 'sent' });
-      const registry = new Map<string, Message>();
-
-      for (const message of list) {
-        registry.set(message.id, message);
-      }
-
-      return {
-        list,
-        registry,
-      };
+      return messages;
     },
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });
-
-  return query;
 };
 
 export const useSendMessageByConversation = (conversationId: string) => {
@@ -76,7 +62,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
       const { data: newMessageRaw } = await api.post<MessageRaw>(`/conversations/${conversationId}/messages`, payload);
       const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
 
-      return { newMessage };
+      return newMessage;
     },
 
     onMutate: async (payload) => {
@@ -84,35 +70,23 @@ export const useSendMessageByConversation = (conversationId: string) => {
 
       if (type !== 'user') return;
 
-      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
-      const prevCache = queryClient.getQueryData(['messages', conversationId]);
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+      const prevCache = queryClient.getQueryData(['conversations', conversationId, 'messages']);
 
       const newMessageTemp = createOptimisticMessage(content, conversationId);
 
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache ?? {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old, newMessageTemp];
 
-          const newList = [...old.list, newMessageTemp];
-          const newRegistry = new Map(old.registry);
-
-          newRegistry.set(newMessageTemp.id, newMessageTemp);
-
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
       queryClient.setQueryData(
-        ['messages', conversationId, 'latest-added'],
-        () => {
-          return newMessageTemp;
-        },
+        ['conversations', conversationId, 'latest-receive'],
+        () => new Date(),
       );
 
       return { prevCache, newMessageTemp };
@@ -120,39 +94,28 @@ export const useSendMessageByConversation = (conversationId: string) => {
 
     onError: (err, variables, context) => {
       if (context?.prevCache) {
-        queryClient.setQueryData(['messages', conversationId], context.prevCache);
+        queryClient.setQueryData(['conversations', conversationId, 'messages'], context.prevCache);
       }
     },
 
-    onSuccess: ({ newMessage }, variables, context) => {
+    onSuccess: (newMessage, variables, context) => {
       const tempId = newMessage.type === 'user' ? context.newMessageTemp.id : newMessage.id;
 
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache ?? {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          const at = newList.findIndex(message => message.id === tempId);
+          const at = newMessages.findIndex(message => message.id === tempId);
           if (at === -1) {
-            newList.push(newMessage);
-            newRegistry.set(newMessage.id, newMessage);
+            newMessages.push(newMessage);
           }
           else {
-            newList[at] = newMessage;
-            newRegistry.delete(tempId);
-            newRegistry.set(newMessage.id, newMessage);
+            newMessages[at] = newMessage;
           }
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
     },
@@ -182,22 +145,12 @@ export const useSendMessageByNewConversation = () => {
 
     onSuccess: ({ newMessage, newConversation }) => {
       queryClient.setQueryData(
-        ['messages', newConversation.id],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache ?? {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', newConversation.id, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old, newMessage];
 
-          const newList = [...old.list, newMessage];
-          const newRegistry = new Map(old.registry);
-
-          newRegistry.set(newMessage.id, newMessage);
-
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
       queryClient.setQueryData(
@@ -238,32 +191,24 @@ export const useDeleteMessage = (conversationId: string) => {
       const { data: deletedMessageRaw } = await api.delete<MessageRaw>(`/messages/${messageId}`);
       const deletedMessage = processRawMessage(deletedMessageRaw, { selfId: me.id, status: 'deleted' });
 
-      return { deletedMessage };
+      return deletedMessage;
     },
 
     onMutate: async (messageId) => {
-      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache ?? {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          const updatedMessage = newRegistry.get(messageId);
-          if (updatedMessage) {
-            updatedMessage.status = 'deleting';
+          const at = newMessages.findIndex(message => message.id === messageId);
+          if (at !== -1) {
+            newMessages[at].status = 'deleting';
           }
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
     },
@@ -284,107 +229,76 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
     const receiveMessageChunk = async (
       { messageId, deltaContent, deltaExtra }:
       { messageId: Message['id'], deltaContent: Message['content'], deltaExtra: Message['extra'] }) => {
-      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
-      let updatedMessage: Message | undefined;
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache || {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache || [];
+          const newMessages = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          updatedMessage = newRegistry.get(messageId);
-          if (updatedMessage !== undefined) {
-            updatedMessage.content += deltaContent;
-            updatedMessage.extra += deltaExtra;
-            updatedMessage.status = 'sending';
+          const at = newMessages.findIndex(message => message.id === messageId);
+          if (at !== -1) {
+            newMessages[at] = {
+              ...newMessages[at],
+              content: newMessages[at].content + deltaContent,
+              extra: newMessages[at].extra + deltaExtra,
+              status: 'sending',
+            };
           }
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
-      // queryClient.setQueryData(
-      //   ['messages', conversationId, 'latest-added'],
-      //   () => {
-      //     return updatedMessage
-      //   }
-      // )
+      queryClient.setQueryData(
+        ['conversations', conversationId, 'latest-receive'],
+        () => new Date(),
+      );
     };
 
     const receiveMessage = async (newMessageRaw: MessageRaw) => {
-      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
       const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
 
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache || {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache || [];
+          const newMessages = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          const at = newList.findIndex(message => message.id === newMessage.id);
+          const at = newMessages.findIndex(message => message.id === newMessage.id);
           if (at === -1) {
-            newList.push(newMessage);
+            newMessages.push(newMessage);
           }
           else {
-            newList[at] = newMessage;
+            newMessages[at] = newMessage;
           }
-          newRegistry.set(newMessage.id, newMessage);
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
       queryClient.setQueryData(
-        ['messages', conversationId, 'latest-added'],
-        () => {
-          return newMessage;
-        },
+        ['conversations', conversationId, 'latest-receive'],
+        () => new Date(),
       );
     };
 
     const removeMessage = async (deletedMessageRaw: MessageRaw) => {
-      await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
       queryClient.setQueryData(
-        ['messages', conversationId],
-        (oldCache?: MessageCache) => {
-          const old: MessageCache = oldCache || {
-            list: [],
-            registry: new Map(),
-          };
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache || [];
+          const newMessages = [...old];
 
-          const newList = [...old.list];
-          const newRegistry = new Map(old.registry);
-
-          const at = newList.findIndex(message => message.id === deletedMessageRaw.id);
-          if (at === -1) {
-            newRegistry.delete(deletedMessageRaw.id);
-          }
-          else {
-            newList.splice(at, 1);
-            newRegistry.delete(deletedMessageRaw.id);
+          const at = newMessages.findIndex(message => message.id === deletedMessageRaw.id);
+          if (at !== -1) {
+            newMessages.splice(at, 1);
           }
 
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newMessages;
         },
       );
     };
@@ -400,7 +314,7 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
   }, [conversationId, queryClient, me, socket]);
 };
 
-export const useLatestAddedMessage = (conversationId: string) => {
+export const useLatestReceivedMessageTime = (conversationId: string) => {
   const queryClient = useQueryClient();
-  return queryClient.getQueryData<Message | undefined>(['messages', conversationId, 'latest-added']) ?? undefined;
+  return queryClient.getQueryData<Message | undefined>(['conversations', conversationId, 'latest-receive']) ?? undefined;
 };

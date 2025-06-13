@@ -167,7 +167,7 @@ export function NavMyAgents() {
       title="My Creations"
       icon={PencilLine}
       sessionKey="velony:sidebar:my-agents"
-      items={data ?? []}
+      items={data?.filter(agent => agent.visibility !== 'default') ?? []}
       isLoading={isPending}
     />
   );
@@ -181,7 +181,7 @@ export function NavMyModels() {
       title="My Creations"
       icon={PencilLine}
       sessionKey="velony:sidebar:my-models"
-      items={data ?? []}
+      items={data?.filter(agent => agent.visibility !== 'default') ?? []}
       isLoading={isPending}
     />
   );

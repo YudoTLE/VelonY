@@ -32,6 +32,11 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { Button } from '@/components/ui/button';
 import { JoinConversationDialog } from '@/components/join-conversation-dialog';
 
@@ -44,6 +49,7 @@ import {
   Search,
   Hammer,
   Wrench,
+  Info,
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -90,7 +96,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </TabsContent>
           <TabsContent value="agents">
             <SidebarGroup>
-              <SidebarGroupLabel className="my-0">Agents</SidebarGroupLabel>
+              <SidebarGroupLabel className="my-0 gap-1">
+                Agents
+                <HoverCard>
+                  <HoverCardTrigger className="cursor-pointer">
+                    <Info size="12" />
+                  </HoverCardTrigger>
+                  <HoverCardContent align="start" className="flex gap-3 bg-secondary size-fit max-w-sm">
+                    <div>
+                      <Bot size="32" />
+                    </div>
+                    <div className="text-xs ">
+                      Defines the bot&apos;s personality and behavior through a system prompt. The name lets the bot know who it is and recognize other bots in group chats.
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </SidebarGroupLabel>
               <div className="flex gap-2 pb-2">
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
                   <Link href="/a/create">
@@ -114,7 +135,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </TabsContent>
           <TabsContent value="models">
             <SidebarGroup>
-              <SidebarGroupLabel className="my-0">Models</SidebarGroupLabel>
+              <SidebarGroupLabel className="my-0 gap-1">
+                Models
+                <HoverCard>
+                  <HoverCardTrigger className="cursor-pointer">
+                    <Info size="12" />
+                  </HoverCardTrigger>
+                  <HoverCardContent align="start" className="flex gap-3 bg-secondary size-fit max-w-sm">
+                    <div>
+                      <Cpu size="32" />
+                    </div>
+                    <div className="text-xs ">
+                      The underlying AI engine that powers the bot&apos;s intelligence and response generation. You can choose from different language models like GPT, Claude, DeepSeek, or any other LLM.
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </SidebarGroupLabel>
               <div className="flex gap-2 pb-2">
                 <Button asChild size="xs" variant="secondary" className="flex-1 rounded-full">
                   <Link href="/m/create">
