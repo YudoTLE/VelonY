@@ -24,8 +24,8 @@ export const useFetchModels = (query = '') => {
   });
 };
 export const useFetchDefaultModels = () => useFetchModels('visibility=default');
-export const useFetchSubscribedModels = () => useFetchModels('user_id=<me>');
-export const useFetchPrivateModels = () => useFetchModels('creator_id=<me>');
+export const useFetchSubscribedModels = () => useFetchModels('userId=<me>');
+export const useFetchPrivateModels = () => useFetchModels('creatorId=<me>');
 export const useFetchPublicModels = () => useFetchModels('visibility=public');
 
 export const useUpdateModelById = (modelId: string) => {

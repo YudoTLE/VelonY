@@ -4,32 +4,32 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function AgentRepository() {
   return {
-    async select(query) {
+    async select(filter = {}) {
       const { supabase } = getContext()
 
-      let dbQuery = supabase
+      let query = supabase
         .from('enriched_agents')
         .select()
-      if (query.agent_id != null) {
-        dbQuery = dbQuery.eq('id', query.agent_id)
+      if (filter.agentId != null) {
+        query = query.eq('id', filter.agentId)
       }
-      if (query.creator_id != null) {
-        dbQuery = dbQuery.eq('creator_id', query.creator_id)
+      if (filter.creatorId != null) {
+        query = query.eq('creator_id', filter.creatorId)
       }
-      if (query.user_id != null) {
-        dbQuery = dbQuery.eq('user_id', query.user_id)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (query.visibility != null) {
-        dbQuery = dbQuery.eq('visibility', query.visibility)
+      if (filter.visibility != null) {
+        query = query.eq('visibility', filter.visibility)
       }
 
-      const { data, error } = await dbQuery
+      const { data, error } = await query
 
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
 
-    async update({ agentId, creatorId, userId, visibility }, payload = {}) {
+    async update(filter = {}, payload = {}) {
       const { supabase } = getContext()
 
       const updates = Object.fromEntries(
@@ -39,17 +39,17 @@ export default function AgentRepository() {
       let query = supabase
         .from('agents')
         .update(changeKeys.snakeCase(updates))
-      if (agentId != null) {
-        query = query.eq('id', agentId)
+      if (filter.agentId != null) {
+        query = query.eq('id', filter.agentId)
       }
-      if (creatorId != null) {
-        query = query.eq('creator_id', creatorId)
+      if (filter.creatorId != null) {
+        query = query.eq('creator_id', filter.creatorId)
       }
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (visibility != null) {
-        query = query.eq('visibility', visibility)
+      if (filter.visibility != null) {
+        query = query.eq('visibility', filter.visibility)
       }
       query = query.select()
 
@@ -59,23 +59,23 @@ export default function AgentRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async delete({ agentId, creatorId, userId, visibility }) {
+    async delete(filter = {}) {
       const { supabase } = getContext()
 
       let query = supabase
         .from('agents')
         .delete()
-      if (agentId != null) {
-        query = query.eq('id', agentId)
+      if (filter.agentId != null) {
+        query = query.eq('id', filter.agentId)
       }
-      if (creatorId != null) {
-        query = query.eq('creator_id', creatorId)
+      if (filter.creatorId != null) {
+        query = query.eq('creator_id', filter.creatorId)
       }
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (visibility != null) {
-        query = query.eq('visibility', visibility)
+      if (filter.visibility != null) {
+        query = query.eq('visibility', filter.visibility)
       }
       query = query.select()
 

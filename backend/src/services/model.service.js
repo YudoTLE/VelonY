@@ -15,7 +15,7 @@ export default function ModelService({ repo }) {
 
       if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const model = (await repo.model.select({ model_id: modelId }))[0]
+      const model = (await repo.model.select({ modelId }))[0]
       if (!model) {
         throw { status: 404, message: 'Model not found' }
       }
@@ -54,7 +54,7 @@ export default function ModelService({ repo }) {
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
       await repo.modelSubscription.insert({ userId, modelId })
-      return (await repo.model.select({ user_id: userId, model_id: modelId }))[0]
+      return (await repo.model.select({ userId, modelId }))[0]
     },
 
     async removeSubscription({ userId, modelId }) {
@@ -63,7 +63,7 @@ export default function ModelService({ repo }) {
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
       await repo.modelSubscription.delete({ userId, modelId })
-      return (await repo.model.select({ model_id: modelId }))[0]
+      return (await repo.model.select({ modelId }))[0]
     },
   }
 }

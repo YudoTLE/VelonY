@@ -41,11 +41,6 @@ declare global {
     createdAt: Date
     updatedAt: Date
   };
-
-  type MessageCache = {
-    list: Message[]
-    registry: Map<string, Message>
-  };
 }
 
 export {};
