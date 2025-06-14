@@ -23,7 +23,7 @@ export const MessageContainer = ({
   style?: React.CSSProperties
 }) => {
   const { data: messages, isPending, error } = useFetchMessages(conversationId);
-  const latestReceivedMessageTime = useLatestReceivedMessageTime(conversationId);
+  const latestReceived = useLatestReceivedMessageTime(conversationId);
 
   useRealtimeSyncMessages(conversationId);
 
@@ -38,22 +38,25 @@ export const MessageContainer = ({
     count: messages?.length ?? 0,
     estimateSize: () => 100,
     getScrollElement,
-    overscan: 3,
+    overscan: 7,
   });
 
   const virtualItems = virtualizer.getVirtualItems();
 
-  // const scrollToBottom = () => {
-  //   if (!scrollAreaRef?.current) return;
-  //   const viewport = getScrollElement();
-  //   if (!viewport) return;
+  const scrollToBottom = () => {
+    if (!scrollAreaRef?.current) return;
+    const viewport = getScrollElement();
+    if (!viewport) return;
 
-  //   viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
-  // };
+    const delta = viewport.scrollHeight - viewport.scrollTop;
+    if (latestReceived?.isOwn || delta <= 700.0) {
+      viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
+    }
+  };
 
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [latestReceivedMessageTime]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [latestReceived]);
 
   if (error) {
     return (

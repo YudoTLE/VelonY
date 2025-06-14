@@ -5,16 +5,17 @@ declare global {
     visibility: AgentVisibility
     name: string
     description: string
-    systemPrompt: string
+    showDetails: boolean
+    systemPrompt?: string
   };
 
   type AgentRaw = AgentData & {
     id: string
     creatorId: string
 
-    userId?: string
+    isSubscribed: boolean
     recentlyUsedAt?: string
-    subscriberCount?: number
+    subscriberCount: number
 
     createdAt: string
     updatedAt: string
@@ -24,12 +25,11 @@ declare global {
     id: string
     creatorId: string
 
-    userId?: string
-    recentlyUsedAt: Date
+    isSubscribed: boolean
+    recentlyUsedAt?: Date
     subscriberCount: number
 
     isOwn: boolean
-    isSubscribed: boolean
     isEditable: boolean
     url: string
 

@@ -11,20 +11,20 @@ declare global {
     visibility: ModelVisibility
     name: string
     description: string
-    llmModel: string
-    endpointUrl: string
+    showDetails: boolean
+    llm?: string
+    endpoint?: string
     apiKey?: string
-    preset: string
-    config: ModelConfigField[]
+    config?: ModelConfigField[]
   };
 
   type ModelRaw = ModelData & {
     id: string
     creatorId: string
 
-    userId?: string
+    isSubscribed: boolean
     recentlyUsedAt?: string
-    subscriberCount?: number
+    subscriberCount: number
 
     createdAt: string
     updatedAt: string
@@ -34,12 +34,11 @@ declare global {
     id: string
     creatorId: string
 
-    userId?: string
-    recentlyUsedAt: Date
+    isSubscribed: boolean
+    recentlyUsedAt?: Date
     subscriberCount: number
 
     isOwn: boolean
-    isSubscribed: boolean
     isEditable: boolean
     url: string
 

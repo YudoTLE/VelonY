@@ -16,6 +16,7 @@ export const useFetchMessages = (conversationId: string) => {
     queryFn: async () => {
       const { data: messagesRaw } = await api.get<MessageRaw[]>(`conversations/${conversationId}/messages`);
       const messages = processRawMessages(messagesRaw, { selfId: me!.id, status: 'sent' });
+      messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
       return messages;
     },
@@ -42,7 +43,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
       content,
       extra: '',
       senderName: 'You',
-      senderAvatarUrl: '',
+      senderAvatar: '',
       agentName: '',
       modelName: '',
       status: 'sending',
@@ -86,7 +87,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
       );
       queryClient.setQueryData(
         ['conversations', conversationId, 'latest-receive'],
-        () => new Date(),
+        () => ({ isOwn: true, time: new Date() }),
       );
 
       return { prevCache, newMessageTemp };
@@ -155,21 +156,11 @@ export const useSendMessageByNewConversation = () => {
       );
       queryClient.setQueryData(
         ['conversations'],
-        (oldCache?: ConversationCache) => {
-          const old: ConversationCache = oldCache ?? {
-            list: [],
-            registry: new Map(),
-          };
+        (oldCache?: Conversation[]) => {
+          const old: Conversation[] = oldCache ?? [];
+          const newConversations = [newConversation, ...old];
 
-          const newList = [newConversation, ...old.list];
-          const newRegistry = new Map(old.registry);
-
-          newRegistry.set(newConversation.id, newConversation);
-
-          return {
-            list: newList,
-            registry: newRegistry,
-          };
+          return newConversations;
         },
       );
 
@@ -252,7 +243,7 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       );
       queryClient.setQueryData(
         ['conversations', conversationId, 'latest-receive'],
-        () => new Date(),
+        () => ({ isOwn: false, time: new Date() }),
       );
     };
 
@@ -280,7 +271,7 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       );
       queryClient.setQueryData(
         ['conversations', conversationId, 'latest-receive'],
-        () => new Date(),
+        () => ({ isOwn: false, time: new Date() }),
       );
     };
 
@@ -316,5 +307,5 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
 
 export const useLatestReceivedMessageTime = (conversationId: string) => {
   const queryClient = useQueryClient();
-  return queryClient.getQueryData<Message | undefined>(['conversations', conversationId, 'latest-receive']) ?? undefined;
+  return queryClient.getQueryData<{ isOwn: boolean, time: Date }>(['conversations', conversationId, 'latest-receive']) ?? undefined;
 };

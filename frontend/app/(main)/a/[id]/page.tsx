@@ -152,19 +152,21 @@ const ViewAgentPage = () => {
                 {agent?.description}
               </ReactMarkdown>
             </div>
-
-            <div className="space-y-2">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <div className="space-y-2">
+            {agent?.showDetails
+              && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <div className="text-muted-foreground">System Prompt: </div>
-                      {agent?.systemPrompt}
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-muted-foreground">System Prompt: </div>
+                          {agent?.systemPrompt}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              )}
           </div>
         </CardContent>
       </Card>

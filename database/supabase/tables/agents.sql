@@ -3,9 +3,10 @@ CREATE TABLE agents (
     
   creator_id    UUID NOT NULL, -- REFERENCES users(id) ON DELETE CASCADE
   
-  visibility    VARCHAR(20) NOT NULL DEFAULT 'private',
-  name          VARCHAR(100) NOT NULL,
+  visibility    VARCHAR(16) NOT NULL DEFAULT 'private',
+  name          VARCHAR(64) NOT NULL,
   description   TEXT NOT NULL,
+  show_details  BOOLEAN NOT NULL DEFAULT FALSE,
   system_prompt TEXT NOT NULL,
 
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),

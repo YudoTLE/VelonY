@@ -39,7 +39,6 @@ import {
   Flame,
   Box,
 } from 'lucide-react';
-import { DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu';
 
 interface SidebarNavItem {
   title?: string
@@ -223,27 +222,13 @@ export function NavGroupConversations() {
       title="Group"
       icon={UsersRound}
       sessionKey="velony:sidebar:group-conversations"
-      items={data?.list.filter(conversation => conversation.memberCount > 1) ?? []}
+      items={data?.filter(conversation => conversation.memberCount > 1) ?? []}
       isLoading={isPending}
-      renderDropdownTrigger={() => (
-        <>
-          <MoreHorizontal />
-          <span className="sr-only">More</span>
-        </>
-      )}
-      renderDropdown={model => (
-        <>
-          <DropdownMenuItem onSelect={() => console.log('Leave', model)}>
-            <Trash2 className="text-muted-foreground mr-2" />
-            Leave
-          </DropdownMenuItem>
-        </>
-      )}
     />
   );
 }
 export function NavPrivateConversations() {
-  const { data: query, isPending: isFetchPending } = useFetchConversations();
+  const { data, isPending } = useFetchConversations();
   const { mutate: deleteConversation } = useDeleteConversation();
 
   return (
@@ -251,8 +236,8 @@ export function NavPrivateConversations() {
       title="Private"
       icon={UserRound}
       sessionKey="velony:sidebar:private-conversations"
-      items={query?.list.filter(conversation => conversation.isOwn && conversation.memberCount === 1) ?? []}
-      isLoading={isFetchPending}
+      items={data?.filter(conversation => conversation.isOwn && conversation.memberCount === 1) ?? []}
+      isLoading={isPending}
       renderDropdownTrigger={() => (
         <>
           <MoreHorizontal />
@@ -261,14 +246,6 @@ export function NavPrivateConversations() {
       )}
       renderDropdown={conversation => (
         <>
-          <DropdownMenuItem onSelect={() => {
-            deleteConversation(conversation.id);
-          }}
-          >
-            <Trash2 className="text-muted-foreground mr-2" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             onSelect={() => {

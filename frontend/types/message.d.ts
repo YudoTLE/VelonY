@@ -16,7 +16,7 @@ declare global {
     senderId?: string
 
     senderName?: string
-    senderAvatarUrl?: string
+    senderAvatar?: string
     agentName?: string
     modelName?: string
 
@@ -30,7 +30,7 @@ declare global {
     senderId?: string
 
     senderName: string
-    senderAvatarUrl: string
+    senderAvatar: string
     agentName: string
     modelName: string
 

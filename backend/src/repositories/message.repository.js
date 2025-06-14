@@ -4,61 +4,85 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function MessageRepository() {
   return {
-    async listForConversation(conversationId, { maxToken }) {
+    async select(filter = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase.rpc('get_messages', {
-        conversation_id: conversationId,
-        max_token: maxToken,
-      })
+      let query = supabase
+        .from('messages')
+        .select()
+      if (filter.messageId != null) {
+        query = query.eq('id', filter.messageId)
+      }
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
+      }
+
+      const { data, error } = await query
+      
       if (error) throw mapSupabaseError(error)
-      data.reverse()
-      return changeKeys.camelCase(data, 6)
+      return changeKeys.camelCase(data, 2)
     },
 
-    async update(messageId, payload) {
+    async delete(filter = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase.
-        rpc('update_message', {
-          type: null,
-          content: null,
-          extra: null,
-          agent_id: null,
-          model_id: null,
-          ...changeKeys.snakeCase(payload, 6),
-          message_id: messageId,
-        })
-        .single()
+      let query = supabase
+        .from('messages')
+        .delete()
+      if (filter.messageId != null) {
+        query = query.eq('id', filter.messageId)
+      }
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
+      }
+      query = query.select()
+
+      const { data, error } = await query
+      
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 6)
+      return changeKeys.camelCase(data, 2)
     },
 
-    async delete(messageId) {
+    async update(filter = {}, payload = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase.
-        rpc('delete_message', {
-          message_id: messageId,
-        })
-        .single()
+      const updates = Object.fromEntries(
+        Object.entries(payload).filter(([_, v]) => v !== undefined)
+      )
+
+      let query = supabase
+        .from('messages')
+        .update(changeKeys.snakeCase(updates))
+      if (filter.messageId != null) {
+        query = query.eq('id', filter.messageId)
+      }
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
+      }
+      query = query.select()
+
+      const { data, error } = await query
+      
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 6)
+      return changeKeys.camelCase(data, 2)
     },
 
-    async createForUser(userId, payload) {
+    async insert(payload = []) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase
-        .rpc('create_message', {
-          agent_id: null,
-          model_id: null,
-          ...changeKeys.snakeCase(payload, 6),
-          sender_id: userId,
-        })
-        .single()
+      const inserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
+
+      let query = supabase
+        .from('messages')
+        .insert(changeKeys.snakeCase(inserts, 2))
+        .select()
+
+      const { data, error } = await query
+
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 6)
-    }
+      return changeKeys.camelCase(data, 2)
+    },
   }
 }

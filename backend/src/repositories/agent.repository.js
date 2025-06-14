@@ -8,7 +8,7 @@ export default function AgentRepository() {
       const { supabase } = getContext()
 
       let query = supabase
-        .from('enriched_agents')
+        .from('agents')
         .select()
       if (filter.agentId != null) {
         query = query.eq('id', filter.agentId)
@@ -16,11 +16,11 @@ export default function AgentRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
+      }
+      if (Array.isArray(filter.agentIds)) {
+        query = query.in('id', filter.agentIds)
       }
 
       const { data, error } = await query
@@ -45,9 +45,6 @@ export default function AgentRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
       }
@@ -71,9 +68,6 @@ export default function AgentRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
       }
@@ -85,23 +79,20 @@ export default function AgentRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async insert(payload = {}) {
+    async insert(payload = []) {
       const { supabase } = getContext()
 
-      const fields = Object.fromEntries(
-        Object.entries(payload).filter(([_, v]) => v !== undefined)
-      )
+      const inserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
 
       const { data, error } = await supabase
         .from('agents')
-        .insert({
-          ...changeKeys.snakeCase(fields),
-        })
+        .insert(changeKeys.snakeCase(inserts, 2))
         .select()
-        .single()
 
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 2)
     },
   }
 }

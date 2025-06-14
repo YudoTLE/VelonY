@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +39,7 @@ import { LoaderCircle, X, Bot } from 'lucide-react';
 const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
+  showDetails: z.boolean(),
   description: z.string(),
   systemPrompt: z.string(),
 });
@@ -58,6 +60,7 @@ const EditAgentPage = () => {
       visibility: 'private',
       name: '',
       description: '',
+      showDetails: false,
       systemPrompt: '',
     },
   });
@@ -72,6 +75,7 @@ const EditAgentPage = () => {
         visibility: agent.visibility || 'private',
         name: agent.name || '',
         description: agent.description || '',
+        showDetails: agent.showDetails,
         systemPrompt: agent.systemPrompt || '',
       };
       form.reset(values);
@@ -258,6 +262,27 @@ const EditAgentPage = () => {
                             />
                           </FormControl>
                           <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="showDetails"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between mt-4">
+                        <h3 className="text-lg font-bold">Details</h3>
+                        <div className="flex gap-2 items-center">
+                          <FormLabel className="text-xs text-muted-foreground">
+                            show in public
+                            {dirtyFields.showDetails && '*'}
+                          </FormLabel>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
                         </div>
                       </FormItem>
                     )}

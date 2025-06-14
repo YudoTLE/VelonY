@@ -48,7 +48,7 @@ const MessageBubbleComponent = (
     deleteMutation(message.id);
   };
 
-  const isSameSenderAsPrev = !message.senderId || message.senderId === prevMessage?.senderId;
+  const isSameSenderAsPrev = (!!message.senderId && message.senderId === prevMessage?.senderId) || (message.isOwn === prevMessage?.isOwn);
   const isSameSenderAsNext = (!!message.senderId && message.senderId === nextMessage?.senderId) || (message.isOwn === nextMessage?.isOwn);
   const mergeWithPrev = isSameSenderAsPrev && prevMessage?.type === 'user';
   const mergeWithNext = isSameSenderAsNext && nextMessage?.type === 'user';
@@ -63,7 +63,7 @@ const MessageBubbleComponent = (
       {!mergeWithPrev
         ? (
             <Avatar className="h-8 w-8 rounded-full mt-4">
-              <AvatarImage src={message.senderAvatarUrl} alt={message.senderName} />
+              <AvatarImage src={message.senderAvatar} alt={message.senderName} />
               <AvatarFallback className="rounded-lg bg-purple-500 cursor-default">{message.initial}</AvatarFallback>
             </Avatar>
           )

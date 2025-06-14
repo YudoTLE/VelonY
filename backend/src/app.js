@@ -31,7 +31,7 @@ app.register(async fastify => {
     conversation: Repositories.ConversationRepository(),
     model: Repositories.ModelRepository(),
     agent: Repositories.AgentRepository(),
-    conversationParticipant: Repositories.ConversationParticipantsRepository(),
+    conversationParticipant: Repositories.ConversationParticipantRepository(),
     agentSubscription: Repositories.AgentSubscriptionRepository(),
     modelSubscription: Repositories.ModelSubscriptionRepository(),
   }

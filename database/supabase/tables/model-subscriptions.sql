@@ -3,7 +3,6 @@ CREATE TABLE model_subscriptions (
   model_id   UUID NOT NULL, -- REFERENCES model(id) ON DELETE CASCADE
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   PRIMARY KEY (user_id, model_id)
 );

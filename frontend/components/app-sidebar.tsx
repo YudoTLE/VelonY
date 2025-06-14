@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 
 import { useSessionTabState } from '@/hooks/use-session-state';
-import { useRealtimeSyncConversations } from '@/hooks/use-conversations';
 
 import {
   NavGroupConversations,
@@ -53,7 +52,6 @@ import {
 } from 'lucide-react';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  useRealtimeSyncConversations();
   const [value, setValue] = useSessionTabState('velony:sidebar:main-tabs', '');
 
   return (

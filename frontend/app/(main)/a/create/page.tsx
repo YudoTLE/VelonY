@@ -5,6 +5,7 @@ import { useCreateAgent } from '@/hooks/use-agents';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -22,6 +23,7 @@ const formSchema = z.object({
   visibility: z.enum(['private', 'public']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   description: z.string(),
+  showDetails: z.boolean(),
   systemPrompt: z.string(),
 });
 
@@ -34,6 +36,7 @@ const CreateAgentPage = () => {
       visibility: 'private',
       name: '',
       description: '',
+      showDetails: false,
       systemPrompt: '',
     },
   });
@@ -88,6 +91,26 @@ const CreateAgentPage = () => {
                           />
                         </FormControl>
                         <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="showDetails"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between mt-4">
+                      <h3 className="text-lg font-bold">Details</h3>
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="text-xs text-muted-foreground">
+                          show in public
+                        </FormLabel>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </div>
                     </FormItem>
                   )}

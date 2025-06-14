@@ -24,7 +24,7 @@ export const useFetchModels = (query = '') => {
   });
 };
 export const useFetchDefaultModels = () => useFetchModels('visibility=default');
-export const useFetchSubscribedModels = () => useFetchModels('userId=<me>');
+export const useFetchSubscribedModels = () => useFetchModels('subscriberId=<me>');
 export const useFetchPrivateModels = () => useFetchModels('creatorId=<me>');
 export const useFetchPublicModels = () => useFetchModels('visibility=public');
 
@@ -54,15 +54,16 @@ export const useUpdateModelById = (modelId: string) => {
         () => updatedModel,
       );
       queryClient.setQueryData(
-        ['models', `creator_id=${me.id}`],
+        ['models', `creatorId=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache || [];
           const newModels = [...old];
 
           const at = newModels.findIndex(model => model.id === updatedModel.id);
           if (at !== -1) {
-            newModels[at] = updatedModel;
+            newModels.splice(at, 1);
           }
+          newModels.unshift(updatedModel);
 
           return newModels;
         },
@@ -89,8 +90,12 @@ export const useCreateModel = () => {
     },
 
     onSuccess: (data) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
-        ['models'],
+        ['models', `creatorId=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache || [];
           const newModels = [data, ...old];
@@ -147,7 +152,7 @@ export const useToggleModelSubscriptionById = (modelId: string) => {
         () => updatedModel,
       );
       queryClient.setQueryData(
-        ['models', `user_id=${me.id}`],
+        ['models', `subscriberId=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache ?? [];
           const newModels = [...old];

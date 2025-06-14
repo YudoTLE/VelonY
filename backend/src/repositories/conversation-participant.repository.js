@@ -4,17 +4,23 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function ConversationParticipantsRepository() {
   return {
-    async select({ userId, conversationId }) {
+    async select(filter = {}) {
       const { supabase } = getContext()
 
       let query = supabase
         .from('conversation_participants')
         .select()
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (conversationId != null) {
-        query = query.eq('conversation_id', conversationId)
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
+      }
+      if (Array.isArray(filter.userIds)) {
+        query = query.in('user_id', filter.userIds)
+      }
+      if (Array.isArray(filter.conversationIds)) {
+        query = query.in('conversation_id', filter.conversationIds)
       }
 
       const { data, error } = await query
@@ -23,41 +29,17 @@ export default function ConversationParticipantsRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async delete({ userId, conversationId }) {
+    async delete(filter = {}) {
       const { supabase } = getContext()
 
       let query = supabase
         .from('conversation_participants')
         .delete()
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (conversationId != null) {
-        query = query.eq('conversation_id', conversationId)
-      }
-      query = query.select()
-
-      const { data, error } = await query
-
-      if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 2)
-    },
-
-    async update({ userId, conversationId }, payload) {
-      const { supabase } = getContext()
-
-      const updates = Object.fromEntries(
-        Object.entries(payload).filter(([_, v]) => v !== undefined)
-      )
-
-      let query = supabase
-        .from('conversation_participants')
-        .update(changeKeys.snakeCase(updates, 6))
-      if (userId != null) {
-        query = query.eq('user_id', userId)
-      }
-      if (conversationId != null) {
-        query = query.eq('conversation_id', conversationId)
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
       }
       query = query.select()
 
@@ -67,7 +49,7 @@ export default function ConversationParticipantsRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async insert({ userId, conversationId }, payload) {
+    async update(filter = {}, payload = {}) {
       const { supabase } = getContext()
 
       const updates = Object.fromEntries(
@@ -76,18 +58,37 @@ export default function ConversationParticipantsRepository() {
 
       let query = supabase
         .from('conversation_participants')
-        .insert({
-          ...changeKeys.snakeCase(updates),
-          user_id: userId,
-          conversation_id: conversationId,
-        })
+        .update(changeKeys.snakeCase(updates))
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
+      }
+      if (filter.conversationId != null) {
+        query = query.eq('conversation_id', filter.conversationId)
+      }
+      query = query.select()
+
+      const { data, error } = await query
+
+      if (error) throw mapSupabaseError(error)
+      return changeKeys.camelCase(data, 2)
+    },
+
+    async insert(payload = []) {
+      const { supabase } = getContext()
+
+      const inserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
+
+      let query = supabase
+        .from('conversation_participants')
+        .insert(changeKeys.snakeCase(inserts, 2))
         .select()
-        .single()
 
       const { data, error } = await query
 
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 2)
     },
   }
 }

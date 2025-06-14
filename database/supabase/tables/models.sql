@@ -3,13 +3,13 @@ CREATE TABLE models (
   
   creator_id   UUID NOT NULL, -- REFERENCES users(id) ON DELETE CASCADE
   
-  visibility   VARCHAR(20) NOT NULL DEFAULT 'private',
-  name         VARCHAR(100) NOT NULL,
+  visibility   VARCHAR(16) NOT NULL DEFAULT 'private',
+  name         VARCHAR(64) NOT NULL,
   description  TEXT NOT NULL,
-  llm_model    VARCHAR(100) NOT NULL,
-  endpoint_url TEXT NOT NULL,
+  show_details BOOLEAN NOT NULL DEFAULT FALSE,
+  llm          VARCHAR(64) NOT NULL,
+  endpoint     TEXT NOT NULL,
   api_key      TEXT NOT NULL,
-  preset       VARCHAR(50) NOT NULL DEFAULT 'Other',
   config       JSONB NOT NULL DEFAULT '{}'::jsonb,
 
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),

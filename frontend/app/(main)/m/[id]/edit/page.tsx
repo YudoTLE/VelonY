@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,10 +47,10 @@ const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   description: z.string(),
-  llmModel: z.string().min(1, 'LLM Model is required').max(100, 'LLM Model is too long'),
-  endpointUrl: z.string().url('Must be a valid URL'),
+  showDetails: z.boolean(),
+  llm: z.string().min(1, 'LLM Model is required').max(100, 'LLM Model is too long'),
+  endpoint: z.string().url('Must be a valid URL'),
   apiKey: z.string().min(1, 'API Key is required'),
-  preset: z.string(),
   config: z.array(z.object({
     type: z.enum(['string', 'float', 'integer', 'boolean']),
     name: z.string().min(1),
@@ -73,10 +74,10 @@ const EditModelPage = () => {
       visibility: 'private',
       name: '',
       description: '',
-      llmModel: '',
-      endpointUrl: '',
+      showDetails: false,
+      llm: '',
+      endpoint: '',
       apiKey: '',
-      preset: 'Other',
       config: [],
     },
   });
@@ -91,10 +92,10 @@ const EditModelPage = () => {
         visibility: model.visibility || 'private',
         name: model.name || '',
         description: model.description || '',
-        llmModel: model.llmModel || '',
-        endpointUrl: model.endpointUrl || '',
+        showDetails: model.showDetails,
+        llm: model.llm || '',
+        endpoint: model.endpoint || '',
         apiKey: model.apiKey || '',
-        preset: model.preset || 'Other',
         config: model.config || [],
       };
       form.reset(values);
@@ -104,6 +105,12 @@ const EditModelPage = () => {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     updateModel(values);
+  };
+
+  const onRevert = () => {
+    if (originalValues) {
+      form.reset(originalValues);
+    }
   };
 
   const onConfigFieldPush = (configField: ModelConfigField) => {
@@ -344,12 +351,33 @@ const EditModelPage = () => {
                       />
                       <FormField
                         control={form.control}
-                        name="llmModel"
+                        name="showDetails"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center justify-between mt-4">
+                            <h3 className="text-lg font-bold">Details</h3>
+                            <div className="flex gap-2 items-center">
+                              <FormLabel className="text-xs text-muted-foreground">
+                                show in public
+                                {dirtyFields.showDetails && '*'}
+                              </FormLabel>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="llm"
                         render={({ field }) => (
                           <FormItem className="flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               Model
-                              {dirtyFields.llmModel && '*'}
+                              {dirtyFields.llm && '*'}
                             </FormLabel>
                             <div className="flex-1">
                               <FormControl>
@@ -362,12 +390,12 @@ const EditModelPage = () => {
                       />
                       <FormField
                         control={form.control}
-                        name="endpointUrl"
+                        name="endpoint"
                         render={({ field }) => (
                           <FormItem className="flex items-baseline">
                             <FormLabel className="w-30 text-md">
-                              Endpoint URL
-                              {dirtyFields.endpointUrl && '*'}
+                              Endpoint
+                              {dirtyFields.endpoint && '*'}
                             </FormLabel>
                             <div className="flex-1">
                               <FormControl>
@@ -470,10 +498,25 @@ const EditModelPage = () => {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="justify-end">
+              <CardFooter className="justify-end gap-3">
                 <div>
-                  <Button type="submit" disabled={isUpdatePending} className="w-30">
-                    {isUpdatePending ? 'Updating...' : 'Update'}
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    disabled={isUpdatePending || !hasChanges}
+                    className="w-30"
+                    onClick={onRevert}
+                  >
+                    Revert
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={isUpdatePending || !hasChanges}
+                    className="w-30"
+                  >
+                    {isUpdatePending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </CardFooter>

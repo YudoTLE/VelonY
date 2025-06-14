@@ -2,7 +2,7 @@ CREATE TABLE conversation_participants (
   user_id         UUID NOT NULL, -- REFERENCES users(id) ON DELETE CASCADE
   conversation_id UUID NOT NULL, -- REFERENCES conversations(id) ON DELETE CASCADE
 
-  role            VARCHAR(10) NOT NULL,
+  role            VARCHAR(8) NOT NULL,
   
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),

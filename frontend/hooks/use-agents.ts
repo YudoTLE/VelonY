@@ -24,7 +24,7 @@ export const useFetchAgents = (query = '') => {
   });
 };
 export const useFetchDefaultAgents = () => useFetchAgents('visibility=default');
-export const useFetchSubscribedAgents = () => useFetchAgents('userId=<me>');
+export const useFetchSubscribedAgents = () => useFetchAgents('subscriberId=<me>');
 export const useFetchPrivateAgents = () => useFetchAgents('creatorId=<me>');
 export const useFetchPublicAgents = () => useFetchAgents('visibility=public');
 
@@ -54,15 +54,16 @@ export const useUpdateAgentById = (agentId: string) => {
         () => updatedAgent,
       );
       queryClient.setQueryData(
-        ['agents', `creator_id=${me.id}`],
+        ['agents', `creatorId=${me.id}`],
         (oldCache?: Agent[]) => {
           const old: Agent[] = oldCache || [];
           const newAgents = [...old];
 
           const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
           if (at !== -1) {
-            newAgents[at] = updatedAgent;
+            newAgents.splice(at, 1);
           }
+          newAgents.unshift(updatedAgent);
 
           return newAgents;
         },
@@ -89,8 +90,12 @@ export const useCreateAgent = () => {
     },
 
     onSuccess: (data) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
       queryClient.setQueryData(
-        ['agents'],
+        ['agents', `creatorId=${me.id}`],
         (oldCache?: Agent[]) => {
           const old: Agent[] = oldCache || [];
           const newAgents = [data, ...old];
@@ -147,7 +152,7 @@ export const useToggleAgentSubscriptionById = (agentId: string) => {
         () => updatedAgent,
       );
       queryClient.setQueryData(
-        ['agents', `user_id=${me.id}`],
+        ['agents', `subscriberId=${me.id}`],
         (oldCache?: Agent[]) => {
           const old: Agent[] = oldCache ?? [];
           const newAgents = [...old];

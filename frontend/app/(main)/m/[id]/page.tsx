@@ -151,42 +151,45 @@ const ViewModelPage = () => {
                 {model?.description}
               </ReactMarkdown>
             </div>
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="space-y-2">
+            {model?.showDetails
+              && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-muted-foreground">Model: </div>
-                      <div>{model?.llmModel}</div>
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-muted-foreground">Model: </div>
+                          <div>{model?.llm}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Endpoint: </div>
+                          <div className="break-all">{model?.endpoint}</div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-muted-foreground">Endpoint: </div>
-                      <div className="break-all">{model?.endpointUrl}</div>
-                    </div>
+
+                    {model?.config && model.config.length > 0 && (
+                      <div>
+                        <div className="space-y-2">
+                          {model.config.map((configItem, index) => (
+                            <div key={index} className="">
+                              <div className="text-muted-foreground">
+                                {configItem.name}
+                                :
+                              </div>
+                              <div className="font-mono text-sm">
+                                {typeof configItem.value === 'boolean'
+                                  ? configItem.value.toString()
+                                  : configItem.value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {model?.config && model.config.length > 0 && (
-                  <div>
-                    <div className="space-y-2">
-                      {model.config.map((configItem, index) => (
-                        <div key={index} className="">
-                          <div className="text-muted-foreground">
-                            {configItem.name}
-                            :
-                          </div>
-                          <div className="font-mono text-sm">
-                            {typeof configItem.value === 'boolean'
-                              ? configItem.value.toString()
-                              : configItem.value}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
           </div>
         </CardContent>
       </Card>

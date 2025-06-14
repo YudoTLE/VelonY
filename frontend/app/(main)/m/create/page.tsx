@@ -5,6 +5,7 @@ import { useCreateModel } from '@/hooks/use-models';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -31,10 +32,10 @@ const formSchema = z.object({
   visibility: z.enum(['private', 'public']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   description: z.string(),
-  llmModel: z.string().min(1, 'LLM Model is required').max(100, 'LLM Model is too long'),
-  endpointUrl: z.string().url('Must be a valid URL'),
+  showDetails: z.boolean(),
+  llm: z.string().min(1, 'LLM Model is required').max(100, 'LLM Model is too long'),
+  endpoint: z.string().url('Must be a valid URL'),
   apiKey: z.string().min(1, 'API Key is required'),
-  preset: z.string(),
   config: z.array(z.object({
     type: z.enum(['string', 'float', 'integer', 'boolean']),
     name: z.string().min(1),
@@ -51,10 +52,10 @@ const CreateModelPage = () => {
       visibility: 'private',
       name: '',
       description: '',
-      llmModel: '',
-      endpointUrl: '',
+      showDetails: false,
+      llm: '',
+      endpoint: '',
       apiKey: '',
-      preset: 'Other',
       config: [],
     },
   });
@@ -180,7 +181,27 @@ const CreateModelPage = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="llmModel"
+                  name="showDetails"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between mt-4">
+                      <h3 className="text-lg font-bold">Details</h3>
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="text-xs text-muted-foreground">
+                          show in public
+                        </FormLabel>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="llm"
                   render={({ field }) => (
                     <FormItem className="flex items-baseline">
                       <FormLabel className="w-30 text-md">Model</FormLabel>
@@ -195,10 +216,10 @@ const CreateModelPage = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="endpointUrl"
+                  name="endpoint"
                   render={({ field }) => (
                     <FormItem className="flex items-baseline">
-                      <FormLabel className="w-30 text-md">Endpoint URL</FormLabel>
+                      <FormLabel className="w-30 text-md">Endpoint</FormLabel>
                       <div className="flex-1">
                         <FormControl>
                           <Input placeholder="https://api.openai.com/v1" {...field} />

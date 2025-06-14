@@ -4,7 +4,7 @@ import MessageRepository                  from './message.repository.js'
 import ConversationRepository             from './conversation.repository.js'
 import ModelRepository                    from './model.repository.js'
 import AgentRepository                    from './agent.repository.js'
-import ConversationParticipantsRepository from './conversation-participants.repository.js'
+import ConversationParticipantRepository from './conversation-participant.repository.js'
 import AgentSubscriptionRepository        from './agent-subscription.repository.js'
 import ModelSubscriptionRepository        from './model-subscription.repository.js'
 
@@ -15,7 +15,7 @@ export {
   ConversationRepository,
   ModelRepository,
   AgentRepository,
-  ConversationParticipantsRepository,
+  ConversationParticipantRepository,
   AgentSubscriptionRepository,
   ModelSubscriptionRepository,
 }

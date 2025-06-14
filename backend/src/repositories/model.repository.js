@@ -8,7 +8,7 @@ export default function ModelRepository() {
       const { supabase } = getContext()
 
       let query = supabase
-        .from('enriched_models')
+        .from('models')
         .select()
       if (filter.modelId != null) {
         query = query.eq('id', filter.modelId)
@@ -16,11 +16,11 @@ export default function ModelRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
+      }
+      if (Array.isArray(filter.modelIds)) {
+        query = query.in('id', filter.modelIds)
       }
 
       const { data, error } = await query
@@ -45,9 +45,6 @@ export default function ModelRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
       }
@@ -71,9 +68,6 @@ export default function ModelRepository() {
       if (filter.creatorId != null) {
         query = query.eq('creator_id', filter.creatorId)
       }
-      if (filter.userId != null) {
-        query = query.eq('user_id', filter.userId)
-      }
       if (filter.visibility != null) {
         query = query.eq('visibility', filter.visibility)
       }
@@ -85,23 +79,20 @@ export default function ModelRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async insert(payload = {}) {
+    async insert(payload = []) {
       const { supabase } = getContext()
 
-      const fields = Object.fromEntries(
-        Object.entries(payload).filter(([_, v]) => v !== undefined)
-      )
+      const inserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
 
       const { data, error } = await supabase
         .from('models')
-        .insert({
-          ...changeKeys.snakeCase(fields),
-        })
+        .insert(changeKeys.snakeCase(inserts, 2))
         .select()
-        .single()
 
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 2)
     },
   }
 }

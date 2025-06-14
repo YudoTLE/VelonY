@@ -29,11 +29,6 @@ declare global {
     isOwn: boolean
     url: string
   };
-
-  type ConversationCache = {
-    list: Conversation[]
-    registry: Map<string, Conversation>
-  };
 }
 
 export {};

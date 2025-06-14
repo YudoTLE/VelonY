@@ -12,7 +12,7 @@ const ConversationPage = () => {
     <div className="flex-1 flex flex-col px-1 py-5 relative items-center align-middle">
       <MessageContainer
         conversationId={id}
-        scrollOverlap={102}
+        scrollOverlap={128}
       />
       <MessageInput
         conversationId={id}

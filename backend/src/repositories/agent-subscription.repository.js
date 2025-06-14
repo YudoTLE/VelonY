@@ -4,17 +4,23 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function AgentSubscriptionRepository() {
   return {
-    async select({ userId, agentId }) {
+    async select(filter = {}) {
       const { supabase } = getContext()
 
       let query = supabase
         .from('agent_subscriptions')
         .select()
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (agentId != null) {
-        query = query.eq('agent_id', agentId)
+      if (filter.agentId != null) {
+        query = query.eq('agent_id', filter.agentId)
+      }
+      if (Array.isArray(filter.userIds)) {
+        query = query.in('user_id', filter.userIds)
+      }
+      if (Array.isArray(filter.agentIds)) {
+        query = query.in('agent_id', filter.agentIds)
       }
 
       const { data, error } = await query
@@ -23,17 +29,17 @@ export default function AgentSubscriptionRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async delete({ userId, agentId }) {
+    async delete(filter = {}) {
       const { supabase } = getContext()
 
       let query = supabase
         .from('agent_subscriptions')
         .delete()
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (agentId != null) {
-        query = query.eq('agent_id', agentId)
+      if (filter.agentId != null) {
+        query = query.eq('agent_id', filter.agentId)
       }
       query = query.select()
 
@@ -43,7 +49,7 @@ export default function AgentSubscriptionRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async update({ userId, agentId }, payload) {
+    async update(filter = {}, payload = {}) {
       const { supabase } = getContext()
 
       const updates = Object.fromEntries(
@@ -53,11 +59,11 @@ export default function AgentSubscriptionRepository() {
       let query = supabase
         .from('agent_subscriptions')
         .update(changeKeys.snakeCase(updates))
-      if (userId != null) {
-        query = query.eq('user_id', userId)
+      if (filter.userId != null) {
+        query = query.eq('user_id', filter.userId)
       }
-      if (agentId != null) {
-        query = query.eq('agent_id', agentId)
+      if (filter.agentId != null) {
+        query = query.eq('agent_id', filter.agentId)
       }
       query = query.select()
 
@@ -67,27 +73,20 @@ export default function AgentSubscriptionRepository() {
       return changeKeys.camelCase(data, 2)
     },
 
-    async insert({ userId, agentId }, payload = {}) {
+    async insert(payload = []) {
       const { supabase } = getContext()
 
-      const updates = Object.fromEntries(
-        Object.entries(payload).filter(([_, v]) => v !== undefined)
-      )
+      const inserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('agent_subscriptions')
-        .insert({
-          ...changeKeys.snakeCase(updates),
-          user_id: userId,
-          agent_id: agentId,
-        })
+        .insert(changeKeys.snakeCase(inserts, 2))
         .select()
-        .single()
-
-      const { data, error } = await query
 
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data)
+      return changeKeys.camelCase(data, 2)
     },
   }
 }

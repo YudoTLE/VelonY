@@ -26,17 +26,17 @@ export default function ModelController({ service, log }) {
 
     async update(request, reply) {
       const { modelId } = request.params
-      const { visibility, name, description, llmModel, endpointUrl, apiKey, preset, config } = request.body
+      const { visibility, name, description, showDetails, llm, endpoint, apiKey, config } = request.body
 
       try {
         const data = await service.update(modelId, {
           visibility,
           name,
           description,
-          llmModel,
-          endpointUrl,
+          showDetails,
+          llm,
+          endpoint,
           apiKey,
-          preset,
           config,
         })
         reply.code(200).send(data)
@@ -47,16 +47,16 @@ export default function ModelController({ service, log }) {
     },
 
     async create(request, reply) {
-      const { name, description, llmModel, endpointUrl, apiKey, preset, config } = request.body
+      const { name, description, showDetails, llm, endpoint, apiKey, config } = request.body
 
       try {
         const data = await service.create({
           name,
           description,
-          llmModel,
-          endpointUrl,
+          showDetails,
+          llm,
+          endpoint,
           apiKey,
-          preset,
           config,
         })
         reply.code(201).send(data)

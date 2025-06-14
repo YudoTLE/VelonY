@@ -4,41 +4,41 @@ import { mapSupabaseError } from '../lib/error.js'
 
 export default function UserRepository() {
   return {
-    async listForConversation(conversationId) {
+    async select(filter = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase
-        .rpc('get_participants', {
-          conversation_id: conversationId
-        })
+      let query = supabase
+        .from('enriched_users')
+        .select()
+      if (filter.userId != null) {
+        query = query.eq('id', filter.userId)
+      }
+      if (Array.isArray(filter.userIds)) {
+        query = query.in('id', filter.userIds)
+      }
+
+      const { data, error } = await query
+
       if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 6)
+      return changeKeys.camelCase(data, 2)
     },
 
-    async get(userId) {
+    async upsert(payload = {}) {
       const { supabase } = getContext()
 
-      const { data, error } = await supabase
-        .rpc('get_user', {
-          user_id: userId,
-        })
-        .single()
-      if (error) throw mapSupabaseError(error)
-      return changeKeys.camelCase(data, 6)
+      const { error: errorUpsert } = await supabase
+        .from('users')
+        .upsert(changeKeys.snakeCase(payload, 2))
+        
+      if (errorUpsert) throw mapSupabaseError(errorUpsert)
+
+      const { data, error: errorSelect } = await supabase
+        .from('enriched_users')
+        .select()
+        .eq('id', payload.id)
+    
+      if (errorSelect) throw mapSupabaseError(errorSelect)
+      return changeKeys.camelCase(data, 2)
     },
-
-    async createOrUpdate(userId, payload = {}) {
-      const { supabase } = getContext()
-
-      const { data, error } = await supabase
-        .rpc('upsert_user', {
-          ...changeKeys.snakeCase(payload, 6),
-          user_id: userId,
-        })
-        .single()
-      if (error) throw mapSupabaseError(error)
-
-      return changeKeys.camelCase(data, 6)
-    }
   }
 }

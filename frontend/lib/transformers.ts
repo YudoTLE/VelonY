@@ -23,7 +23,7 @@ export const processRawMessage = (
 ): Message => {
   const isOwn = !!config.selfId && config.selfId === raw.senderId;
   const senderName = isOwn ? 'You' : raw.senderName || '<VelonY User>';
-  const senderAvatarUrl = raw.senderAvatarUrl || '';
+  const senderAvatar = raw.senderAvatar || '';
   const agentName = raw.agentName || '<VelonY Agent>';
   const modelName = raw.modelName || '<VelonY Model>';
   const initial = (raw.type === 'user' ? senderName : agentName)
@@ -32,7 +32,7 @@ export const processRawMessage = (
   return {
     ...raw,
     senderName,
-    senderAvatarUrl,
+    senderAvatar,
     agentName,
     modelName,
     status: config.status || 'sending',
@@ -80,7 +80,6 @@ export const processRawAgent = (
   config: { selfId: string },
 ): Agent => {
   const isOwn = !!config.selfId && config.selfId === raw.creatorId;
-  const isSubscribed = !!config.selfId && config.selfId === raw.userId;
   const isEditable = isOwn && (raw.visibility !== 'default');
   const subscriberCount = raw.subscriberCount ?? 0;
 
@@ -88,7 +87,6 @@ export const processRawAgent = (
     ...raw,
     subscriberCount,
     isOwn,
-    isSubscribed,
     isEditable,
     url: `/a/${raw.id}`,
     recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),
@@ -109,7 +107,6 @@ export const processRawModel = (
   config: { selfId: string },
 ): Model => {
   const isOwn = !!config.selfId && config.selfId === raw.creatorId;
-  const isSubscribed = !!config.selfId && config.selfId === raw.userId;
   const isEditable = isOwn && (raw.visibility !== 'default');
   const subscriberCount = raw.subscriberCount ?? 0;
 
@@ -117,7 +114,6 @@ export const processRawModel = (
     ...raw,
     subscriberCount,
     isOwn,
-    isSubscribed,
     isEditable,
     url: `/m/${raw.id}`,
     recentlyUsedAt: raw.recentlyUsedAt ? new Date(raw.recentlyUsedAt) : new Date(raw.updatedAt),

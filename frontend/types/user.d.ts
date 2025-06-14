@@ -2,7 +2,7 @@ declare global {
   type UserData = {
     email: string
     name: string
-    avatarUrl: string
+    avatar: string
   };
 
   type UserRaw = UserData & {
