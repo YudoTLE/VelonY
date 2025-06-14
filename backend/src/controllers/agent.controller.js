@@ -60,6 +60,18 @@ export default function AgentController({ service, log }) {
       }
     },
 
+    async delete(request, reply) {
+      const { agentId } = request.params
+
+      try {
+        const data = await service.delete(agentId)
+        reply.code(201).send(data)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
+
     async addSubscriptionSelf(request, reply) {
       const { user } = request
       const { agentId } = request.params

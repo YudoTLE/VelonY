@@ -99,6 +99,21 @@ export default function AgentService({ repo }) {
       return enrichedAgent
     },
 
+    async delete(agentId) {
+      const { user } = getContext()
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+
+      const [agent] = await repo.agent.delete({ agentId })
+
+      const enrichedAgent = {
+        ...agent,
+        isSubscribed: false,
+        subscriberCount: 0,
+      }
+
+      return enrichedAgent
+    },
+
     async addSubscription({ userId, agentId }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }

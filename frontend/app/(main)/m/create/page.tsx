@@ -187,7 +187,7 @@ const CreateModelPage = () => {
                       <h3 className="text-lg font-bold">Details</h3>
                       <div className="flex gap-2 items-center">
                         <FormLabel className="text-xs text-muted-foreground">
-                          show in public
+                          show in view
                         </FormLabel>
                         <FormControl>
                           <Switch

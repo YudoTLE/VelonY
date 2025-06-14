@@ -5,6 +5,7 @@ export default async function agentRoutes(fastify) {
   fastify.post('/',                            c.create)
   fastify.get('/:agentId',                     c.get)
   fastify.patch('/:agentId',                   c.update)
+  fastify.delete('/:agentId',                  c.delete)
   fastify.post('/:agentId/subscribers/self',   c.addSubscriptionSelf)
   fastify.delete('/:agentId/subscribers/self', c.removeSubscriptionSelf)
 }

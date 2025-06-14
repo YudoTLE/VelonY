@@ -89,7 +89,7 @@ export const useCreateModel = () => {
       return newModel;
     },
 
-    onSuccess: (data) => {
+    onSuccess: (deletedModel) => {
       if (!me) {
         throw new Error('Unauthenticated');
       }
@@ -98,13 +98,55 @@ export const useCreateModel = () => {
         ['models', `creatorId=${me.id}`],
         (oldCache?: Model[]) => {
           const old: Model[] = oldCache || [];
-          const newModels = [data, ...old];
+          const newModels = [deletedModel, ...old];
 
           return newModels;
         },
       );
 
-      router.push(data.url);
+      router.push(deletedModel.url);
+    },
+  });
+};
+
+export const useDeleteModelById = (modelId: string) => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: deletedModelRaw } = await api.delete<ModelRaw>(`models/${modelId}`);
+      const deletedModel = processRawModel(deletedModelRaw, { selfId: me.id });
+
+      return deletedModel;
+    },
+
+    onSuccess: (deletedModel) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      queryClient.setQueryData(
+        ['models', `creatorId=${me.id}`],
+        (oldCache?: Model[]) => {
+          const old: Model[] = oldCache || [];
+          const newModels = [...old];
+
+          const at = newModels.findIndex(m => m.id === deletedModel.id);
+          if (at !== -1) {
+            newModels.splice(at, 1);
+          }
+
+          return newModels;
+        },
+      );
+
+      router.push('/');
     },
   });
 };

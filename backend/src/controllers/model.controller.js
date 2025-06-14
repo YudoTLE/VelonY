@@ -66,6 +66,18 @@ export default function ModelController({ service, log }) {
       }
     },
 
+    async delete(request, reply) {
+      const { modelId } = request.params
+
+      try {
+        const data = await service.delete(modelId)
+        reply.code(201).send(data)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
+
     async addSubscriptionSelf(request, reply) {
       const { user } = request
       const { modelId } = request.params

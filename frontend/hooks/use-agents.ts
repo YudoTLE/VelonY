@@ -109,6 +109,48 @@ export const useCreateAgent = () => {
   });
 };
 
+export const useDeleteAgentById = (agentId: string) => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: deletedAgentRaw } = await api.delete<AgentRaw>(`agents/${agentId}`);
+      const deletedAgent = processRawAgent(deletedAgentRaw, { selfId: me.id });
+
+      return deletedAgent;
+    },
+
+    onSuccess: (deletedAgent) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      queryClient.setQueryData(
+        ['agents', `creatorId=${me.id}`],
+        (oldCache?: Agent[]) => {
+          const old: Agent[] = oldCache || [];
+          const newAgents = [...old];
+
+          const at = newAgents.findIndex(m => m.id === deletedAgent.id);
+          if (at !== -1) {
+            newAgents.splice(at, 1);
+          }
+
+          return newAgents;
+        },
+      );
+
+      router.push('/');
+    },
+  });
+};
+
 export const useFetchAgentById = (agentId: string) => {
   const { data: me } = useMe();
 

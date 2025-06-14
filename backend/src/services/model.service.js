@@ -99,6 +99,21 @@ export default function ModelService({ repo }) {
       return enrichedModel
     },
 
+    async delete(modelId) {
+      const { user } = getContext()
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+
+      const [model] = await repo.model.delete({ modelId })
+
+      const enrichedModel = {
+        ...model,
+        isSubscribed: false,
+        subscriberCount: 0,
+      }
+
+      return enrichedModel
+    },
+
     async addSubscription({ userId, modelId }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }

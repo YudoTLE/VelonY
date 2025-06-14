@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
-import { useFetchModelById, useUpdateModelById } from '@/hooks/use-models';
+import { useFetchModelById, useUpdateModelById, useDeleteModelById } from '@/hooks/use-models';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
@@ -64,8 +64,10 @@ const EditModelPage = () => {
 
   const { data: model, error: fetchError, isPending: isFetchPending } = useFetchModelById(id);
   const { mutate: updateModel, isPending: isUpdatePending } = useUpdateModelById(id);
+  const { mutate: deleteModel } = useDeleteModelById(id);
 
   const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [originalValues, setOriginalValues] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -357,7 +359,7 @@ const EditModelPage = () => {
                             <h3 className="text-lg font-bold">Details</h3>
                             <div className="flex gap-2 items-center">
                               <FormLabel className="text-xs text-muted-foreground">
-                                show in public
+                                show in view
                                 {dirtyFields.showDetails && '*'}
                               </FormLabel>
                               <FormControl>
@@ -498,26 +500,39 @@ const EditModelPage = () => {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="justify-end gap-3">
+              <CardFooter className="justify-between">
                 <div>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     type="button"
-                    disabled={isUpdatePending || !hasChanges}
-                    className="w-30"
-                    onClick={onRevert}
+                    disabled={isUpdatePending}
+                    className="w-30 text-red-500"
+                    onClick={() => setShowDeleteDialog(true)}
                   >
-                    Revert
+                    Delete
                   </Button>
                 </div>
-                <div>
-                  <Button
-                    type="submit"
-                    disabled={isUpdatePending || !hasChanges}
-                    className="w-30"
-                  >
-                    {isUpdatePending ? 'Saving...' : 'Save Changes'}
-                  </Button>
+                <div className="flex gap-3">
+                  <div>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      disabled={isUpdatePending || !hasChanges}
+                      className="w-30"
+                      onClick={onRevert}
+                    >
+                      Revert
+                    </Button>
+                  </div>
+                  <div>
+                    <Button
+                      type="submit"
+                      disabled={isUpdatePending || !hasChanges}
+                      className="w-30"
+                    >
+                      {isUpdatePending ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
                 </div>
               </CardFooter>
             </form>
@@ -593,12 +608,60 @@ const EditModelPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              className="flex-1 bg-secondary text-red-400 hover:bg-red-700 hover:text-white"
+              className="flex-1 bg-secondary text-red-500 hover:bg-red-700 hover:text-white"
               onClick={handleVisibilityChange}
             >
               Make this model
               {' '}
               {model?.visibility === 'private' ? 'public' : 'private'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="relative">
+            <AlertDialogCancel asChild className="size-8" onClick={() => setShowDeleteDialog(false)}>
+              <Button className="absolute right-0 top-0 border-none">
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogTitle>
+              Delete
+              {' '}
+              {model?.name}
+              ?
+            </AlertDialogTitle>
+            <div className="space-y-4">
+
+              <Alert variant="destructive">
+                <AlertDescription>
+                  <strong>WARNING: This model will be permanently deleted and cannot be recovered.</strong>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <p>This action will:</p>
+                <ul className="list-disc ml-6 space-y-1">
+                  <li>Permanently delete this model</li>
+                  <li>Make the model completely inaccessible to all users</li>
+                  <li>Break all existing public links permanently</li>
+                </ul>
+              </div>
+
+              <Alert>
+                <AlertDescription>
+                  <strong>This action cannot be undone.</strong>
+                </AlertDescription>
+              </Alert>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              className="flex-1 bg-secondary text-red-500 hover:bg-red-700 hover:text-white"
+              onClick={() => deleteModel()}
+            >
+              Delete this model
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
