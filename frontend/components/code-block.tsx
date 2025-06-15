@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
 import { cn } from '@/lib/utils';
 
-import { Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -56,13 +56,22 @@ interface CodeBlockProps {
 const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   const ref = useRef<HTMLElement>(null);
 
+  const [copied, setCopied] = useState(false);
+
   const effectiveLanguage = language === 'mermaid' ? 'yaml' : language;
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!ref.current) return;
 
     const el = ref.current;
-    navigator.clipboard.writeText(el.textContent ?? '');
+    try {
+      await navigator.clipboard.writeText(el.textContent || '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+    catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   useEffect(() => {
@@ -84,12 +93,23 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
       <div className="bg-border ring ring-border px-3 py-0.5 flex justify-between -mb-[21px]">
         {language}
         <Button
+          className="relative"
           onClick={handleCopy}
           variant="ghost"
           size="xs"
         >
-          <Copy />
-          Copy
+          <Copy className={cn(
+            'transition-all duration-200 ease-in-out',
+            copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
+          )}
+          />
+          <div className={cn(
+            'absolute inset-0 flex items-center justify-center transition-all duration-200 ease-in-out',
+            copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+          )}
+          >
+            <Check />
+          </div>
         </Button>
       </div>
 

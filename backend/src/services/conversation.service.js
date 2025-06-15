@@ -296,18 +296,16 @@ export default function ConversationService({ repo, io }) {
 
         let accDeltaContent = ''
         let accDeltaExtra = ''
-        const flush = (emit = false) => {
+        const flush = () => {
           streamedMessage.content += accDeltaContent
           streamedMessage.extra += accDeltaExtra
           
-          if (emit) {
-            for (const participantId of userIds) {
-              io.of('/users').to(participantId).emit('receive-message-chunk', {
-                messageId: streamedMessage.id,
-                deltaContent: accDeltaContent,
-                deltaExtra: accDeltaExtra,
-              })
-            }
+          for (const participantId of userIds) {
+            io.of('/users').to(participantId).emit('receive-message-chunk', {
+              messageId: streamedMessage.id,
+              deltaContent: accDeltaContent,
+              deltaExtra: accDeltaExtra,
+            })
           }
 
           accDeltaContent = ''
@@ -325,7 +323,7 @@ export default function ConversationService({ repo, io }) {
           accDeltaExtra += deltaExtra
 
           if (accDeltaContent.length + accDeltaExtra.length > ACC_CAPACITY) {
-            flush(true)
+            flush()
           }
           flush()
         }
@@ -356,7 +354,7 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
-      const [participant] = await repo.conversationParticipant.insert([{ userId, conversationId, role: 'member' }])
+      await repo.conversationParticipant.insert([{ userId, conversationId, role: 'member' }])
       const [participants, [conversation]] = await Promise.all([
         repo.conversationParticipant.select({ conversationId }),
         repo.conversation.select({ conversationId }),

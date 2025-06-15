@@ -1,6 +1,6 @@
 import { useDeleteMessage } from '@/hooks/use-messages';
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from '@/components/code-block';
@@ -169,12 +169,28 @@ const MessageBubbleAIComponent = (
   { message }: { message: Message },
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId);
+  const [copiedContent, setCopiedContent] = useState(false);
+  const [copiedExtra, setCopiedExtra] = useState(false);
 
-  const handleCopyExtra = () => {
-    navigator.clipboard.writeText(message.extra);
+  const handleCopyExtra = async () => {
+    try {
+      await navigator.clipboard.writeText(message.extra);
+      setCopiedExtra(true);
+      setTimeout(() => setCopiedExtra(false), 2000);
+    }
+    catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
-  const handleCopyContent = () => {
-    navigator.clipboard.writeText(message.content);
+  const handleCopyContent = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopiedContent(true);
+      setTimeout(() => setCopiedContent(false), 2000);
+    }
+    catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
   const handleDelete = () => {
     deleteMutation(message.id);
@@ -191,7 +207,7 @@ const MessageBubbleAIComponent = (
       <Avatar className="h-8 w-8 rounded-full mt-4 mr-1">
         <AvatarFallback className="rounded-lg bg-purple-500 cursor-default">{message.initial}</AvatarFallback>
       </Avatar>
-      <div className="w-full">
+      <div className="w-full min-w-0">
         <div className="text-muted-foreground text-xs mt-2">
           {message.agentName}
           {' '}
@@ -211,7 +227,18 @@ const MessageBubbleAIComponent = (
                 size="xs"
                 className="absolute right-2.5 top-0  text-blue-400 z-20 bg-zinc-900/50 backdrop-blur-2xl border border-white/10"
               >
-                <Copy />
+                <Copy className={cn(
+                  'transition-all duration-200 ease-in-out',
+                  copiedExtra ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
+                )}
+                />
+                <div className={cn(
+                  'absolute inset-0 flex items-center justify-center transition-all duration-200 ease-in-out',
+                  copiedExtra ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+                )}
+                >
+                  <Check />
+                </div>
               </Button>
 
               <div className="absolute bottom-0 right-2.5 text-blue-400 z-20 bg-zinc-900/50 backdrop-blur-2xl px-2 py-1 rounded border border-white/10 cursor-default">
@@ -272,9 +299,20 @@ const MessageBubbleAIComponent = (
             onClick={handleCopyContent}
             variant="ghost"
             size="sm"
-            className="opacity-50 group-hover:opacity-80"
+            className="opacity-50 relative group-hover:opacity-80"
           >
-            <Copy />
+            <Copy className={cn(
+              'transition-all duration-200 ease-in-out',
+              copiedContent ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
+            )}
+            />
+            <div className={cn(
+              'absolute inset-0 flex items-center justify-center transition-all duration-200 ease-in-out',
+              copiedContent ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+            )}
+            >
+              <Check />
+            </div>
           </Button>
           <Button
             onClick={handleDelete}
