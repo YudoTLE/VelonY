@@ -6,7 +6,7 @@ import { saveToken } from '../lib/token-store.js'
 export default function DBRepository() {
   return {
     async authenticate(provider, token) {
-      const { supabase } = await getContext()
+      const { supabase, redis } = await getContext()
 
       const { data, error } = await supabase.auth.signInWithIdToken({ 
         provider,
@@ -17,13 +17,18 @@ export default function DBRepository() {
       const userId = data.user.id
       const accessToken = data.session.access_token
       const refreshToken = data.session.refresh_token
-      const expiresIn = data.session.expiresIn
+      const expiresIn = data.session.expires_in
 
-      await saveToken(userId, {
-        accessToken,
-        refreshToken,
-        expiresAt: Date.now() + expiresIn * 1000
-      })
+      await redis.set(
+        `supabase:token:${userId}`, 
+        JSON.stringify({
+          accessToken,
+          refreshToken,
+          expiresAt: Date.now() + expiresIn * 1000
+        }),
+        'EX',
+        expiresIn - 60,
+      )
 
       return changeKeys.camelCase(data)
     },

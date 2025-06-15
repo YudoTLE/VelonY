@@ -16,6 +16,7 @@
     "@fastify/jwt": "^9.1.0",
     "@fastify/oauth2": "^8.1.2",
     "@fastify/postgres": "^6.0.2",
+    "@fastify/redis": "^7.0.2",
     "@fastify/websocket": "^11.0.2",
     "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.8.4",

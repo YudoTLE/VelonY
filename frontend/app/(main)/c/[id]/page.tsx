@@ -52,7 +52,7 @@ const ConversationPage = () => {
                     {conversation?.title}
                   </h2>
                   <p className="text-muted-foreground text-xs">
-                    {createdText}
+                    click here to see details
                   </p>
                 </>
               )}
@@ -115,7 +115,7 @@ const ConversationPage = () => {
                       <Trash size="20" />
                     </div>
                     <div className="grid flex-1 text-left leading-tight">
-                      Delete Group
+                      Delete Conversation
                     </div>
                   </button>
                 )}
@@ -129,7 +129,7 @@ const ConversationPage = () => {
                       <LogOut size="20" />
                     </div>
                     <div className="grid flex-1 text-left leading-tight">
-                      Exit Group
+                      Exit Conversation
                     </div>
                   </button>
                 )}
