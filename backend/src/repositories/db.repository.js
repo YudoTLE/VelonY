@@ -1,7 +1,6 @@
 import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
 import { mapSupabaseError } from '../lib/error.js'
-import { saveToken } from '../lib/token-store.js'
 
 export default function DBRepository() {
   return {
