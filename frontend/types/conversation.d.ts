@@ -1,5 +1,13 @@
 declare global {
-  type ConversationRole = 'admin' | 'member';
+  type ConversationRole = 'creator' | 'admin' | 'member';
+  type ConversationParticipantRaw = {
+    role: ConversationRole
+    user: UserRaw
+  };
+  type ConversationParticipant = {
+    role: ConversationRole
+    user: User
+  };
 
   type ConversationData = {
     title: string
@@ -9,8 +17,7 @@ declare global {
     id: string
     creatorId: string
 
-    role: ConversationRole
-    memberCount: number
+    participants: ConversationParticipantRaw[]
 
     createdAt: string
     updatedAt: string
@@ -20,8 +27,7 @@ declare global {
     id: string
     creatorId: string
 
-    role: ConversationRole
-    memberCount: number
+    participants: ConversationParticipant[]
 
     createdAt: Date
     updatedAt: Date

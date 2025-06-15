@@ -281,6 +281,7 @@ const EditAgentPage = () => {
                           </FormLabel>
                           <FormControl>
                             <Switch
+                              className="cursor-pointer"
                               checked={field.value}
                               onCheckedChange={field.onChange}
                             />
@@ -325,8 +326,8 @@ const EditAgentPage = () => {
                     Delete
                   </Button>
                 </div>
-                <div>
-                  <div className="flex gap-3">
+                <div className="flex gap-3">
+                  <div>
                     <Button
                       variant="secondary"
                       type="button"

@@ -67,10 +67,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </h1>
           </Link>
           <TabsList className="w-full my-0">
-            <TabsTrigger value="conversations"><MessageSquare /></TabsTrigger>
-            <TabsTrigger value="agents"><Bot /></TabsTrigger>
-            <TabsTrigger value="models"><Cpu /></TabsTrigger>
-            <TabsTrigger value="settings"><Settings /></TabsTrigger>
+            <TabsTrigger className="cursor-pointer" value="conversations"><MessageSquare /></TabsTrigger>
+            <TabsTrigger className="cursor-pointer" value="agents"><Bot /></TabsTrigger>
+            <TabsTrigger className="cursor-pointer" value="models"><Cpu /></TabsTrigger>
+            <TabsTrigger className="cursor-pointer" value="settings"><Settings /></TabsTrigger>
           </TabsList>
         </SidebarHeader>
         <SidebarContent>

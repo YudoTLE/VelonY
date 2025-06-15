@@ -37,6 +37,18 @@ export default function ConversationController({ service, log }) {
       }
     },
 
+    async get(request, reply) {
+      const { conversationId } = request.params
+
+      try {
+        const data = await service.get(conversationId)
+        reply.code(201).send(data)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
+
     async postMessage(request, reply) {
       const { conversationId } = request.params
       const { type, content, extra, agentId, modelId, tempId } = request.body
@@ -94,7 +106,7 @@ export default function ConversationController({ service, log }) {
       }
     },
 
-    async removeParticipantSelf(request, reply) {
+    async removeParticipant(request, reply) {
       const { conversationId, userId } = request.params
       
       try {

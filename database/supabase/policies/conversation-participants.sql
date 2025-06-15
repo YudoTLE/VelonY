@@ -9,16 +9,9 @@ ON conversation_participants
 FOR UPDATE
 TO authenticated
 USING (
-  -- Users can always update themselves (notification settings, etc.)
-  user_id = auth.uid()
-  OR (
-    -- For non-global: admins can update members
+  (
+    -- Admins can update members
     EXISTS (
-      SELECT 1 FROM conversations 
-      WHERE conversations.id = conversation_participants.conversation_id 
-        AND conversations.type != 'global'
-    )
-    AND EXISTS (
       SELECT 1 FROM conversation_participants cp
       WHERE cp.conversation_id = conversation_participants.conversation_id
         AND cp.user_id = auth.uid()
@@ -27,25 +20,19 @@ USING (
     AND role = 'member'
   )
   OR (
-    -- Creators can always update anyone
+    -- Creators can always update anyone (except themselves)
     EXISTS (
       SELECT 1 FROM conversations
       WHERE conversations.id = conversation_participants.conversation_id
         AND conversations.creator_id = auth.uid()
     )
+    AND user_id != auth.uid()
   )
 )
 WITH CHECK (
-  -- Users can update themselves
-  user_id = auth.uid()
-  OR (
-    -- For non-global: admins can promote members
+  (
+    -- Admins can promote members
     EXISTS (
-      SELECT 1 FROM conversations 
-      WHERE conversations.id = conversation_participants.conversation_id 
-        AND conversations.type != 'global'
-    )
-    AND EXISTS (
       SELECT 1 FROM conversation_participants cp
       WHERE cp.conversation_id = conversation_participants.conversation_id
         AND cp.user_id = auth.uid()
@@ -54,12 +41,13 @@ WITH CHECK (
     AND role IN ('member', 'admin')
   )
   OR (
-    -- Creators can always update anyone
+    -- Creators can always update anyone (except themselves)
     EXISTS (
       SELECT 1 FROM conversations
       WHERE conversations.id = conversation_participants.conversation_id
         AND conversations.creator_id = auth.uid()
     )
+    AND user_id != auth.uid()
   )
 );
 
@@ -81,8 +69,15 @@ USING (
       AND conversations.type != 'global'
   )
   AND (
-    -- Users can leave themselves
-    user_id = auth.uid()
+    -- Users can leave themselves (but not if they're the creator)
+    (
+      user_id = auth.uid()
+      AND NOT EXISTS (
+        SELECT 1 FROM conversations
+        WHERE conversations.id = conversation_participants.conversation_id
+          AND conversations.creator_id = auth.uid()
+      )
+    )
     OR (
       -- Admins can kick members (but not other admins)
       EXISTS (
@@ -94,12 +89,13 @@ USING (
       AND role = 'member'
     )
     OR (
-      -- Creators can kick anyone
+      -- Creators can kick anyone (except themselves)
       EXISTS (
         SELECT 1 FROM conversations
         WHERE conversations.id = conversation_participants.conversation_id
           AND conversations.creator_id = auth.uid()
       )
+      AND user_id != auth.uid()
     )
   )
 );

@@ -14,11 +14,10 @@ import { LogIn } from 'lucide-react';
 import { Form, FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 
 import { useForm } from 'react-hook-form';
+import { useJoinConversation } from '@/hooks/use-conversations';
 
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import api from '@/lib/axios'; // adjust if needed
 
 const formSchema = z.object({
   conversationId: z.string().uuid('Must be a valid UUID'),
@@ -32,13 +31,10 @@ export function JoinConversationDialog() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      await api.post(`/conversations/${values.conversationId}/participants/self`);
-    }
-    catch (err) {
-      console.error(err);
-    }
+  const { mutate: joinConversation } = useJoinConversation();
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    joinConversation(values.conversationId);
   };
 
   return (

@@ -10,6 +10,7 @@ export default function MessageRepository() {
       let query = supabase
         .from('messages')
         .select()
+        .order('created_at', { ascending: true })
       if (filter.messageId != null) {
         query = query.eq('id', filter.messageId)
       }

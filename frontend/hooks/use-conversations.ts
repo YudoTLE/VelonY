@@ -1,23 +1,42 @@
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMe } from '@/hooks/use-users';
 
 import { processRawConversations, processRawConversation } from '@/lib/transformers';
 import api from '@/lib/axios';
 
-export const useFetchConversations = () => {
+export const useFetchConversations = (query = '') => {
   const { data: me } = useMe();
+
+  const resolvedQuery = query.replaceAll('<me>', me?.id || '').trim();
 
   return useQuery({
     enabled: !!me,
-    queryKey: ['conversations'],
+    queryKey: resolvedQuery ? ['conversations', resolvedQuery] : ['conversations'],
     queryFn: async () => {
-      const { data: conversationsRaw } = await api.get<ConversationRaw[]>('/conversations');
+      const { data: conversationsRaw } = await api.get<ConversationRaw[]>(`/conversations?${resolvedQuery}`);
       const conversations = processRawConversations(conversationsRaw, { selfId: me!.id });
       conversations.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
       return conversations;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 3,
+  });
+};
+
+export const useFetchConversationsById = (conversationId: string) => {
+  const { data: me } = useMe();
+
+  return useQuery({
+    enabled: !!me,
+    queryKey: ['conversation', conversationId],
+    queryFn: async () => {
+      const { data: conversationRaw } = await api.get<ConversationRaw>(`/conversations/${conversationId}`);
+      const conversation = processRawConversation(conversationRaw, { selfId: me!.id });
+
+      return conversation;
+    },
+    staleTime: 1000 * 60 * 1,
   });
 };
 
@@ -51,12 +70,13 @@ export const useCreateConversation = () => {
   });
 };
 
-export const useDeleteConversation = () => {
+export const useDeleteConversationById = (conversationId: string) => {
   const queryClient = useQueryClient();
   const { data: me } = useMe();
+  const router = useRouter();
 
   return useMutation({
-    mutationFn: async (conversationId: string) => {
+    mutationFn: async () => {
       if (!me) {
         throw new Error('Unauthenticated');
       }
@@ -82,34 +102,37 @@ export const useDeleteConversation = () => {
           return newConversations;
         },
       );
+
+      router.push('/');
     },
   });
 };
 
-export const useLeaveConversation = () => {
+export const useExitConversationById = (conversationId: string) => {
   const queryClient = useQueryClient();
   const { data: me } = useMe();
+  const router = useRouter();
 
   return useMutation({
-    mutationFn: async (conversationId: string) => {
+    mutationFn: async () => {
       if (!me) {
         throw new Error('Unauthenticated');
       }
 
-      const { data: deletedConversationRaw } = await api.delete<ConversationRaw>(`/conversations/${conversationId}/participants/self`);
-      const deletedConversation = processRawConversation(deletedConversationRaw, { selfId: me.id });
+      const { data: exitedConversationRaw } = await api.delete<ConversationRaw>(`/conversations/${conversationId}/participants/${me.id}`);
+      const exitedConversation = processRawConversation(exitedConversationRaw, { selfId: me.id });
 
-      return deletedConversation;
+      return exitedConversation;
     },
 
-    onSuccess: (deletedConversation) => {
+    onSuccess: (exitedConversation) => {
       queryClient.setQueryData(
         ['conversations'],
         (oldCache?: Conversation[]) => {
           const old: Conversation[] = oldCache ?? [];
           const newConversations = [...old];
 
-          const at = newConversations.findIndex(conversation => conversation.id === deletedConversation.id);
+          const at = newConversations.findIndex(c => c.id === exitedConversation.id);
           if (at !== -1) {
             newConversations.splice(at, 1);
           }
@@ -117,6 +140,41 @@ export const useLeaveConversation = () => {
           return newConversations;
         },
       );
+
+      router.push('/');
+    },
+  });
+};
+
+export const useJoinConversation = () => {
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: joinedConversationRaw } = await api.post<ConversationRaw>(`/conversations/${conversationId}/participants/self`);
+      const joinedConversation = processRawConversation(joinedConversationRaw, { selfId: me.id });
+
+      return joinedConversation;
+    },
+
+    onSuccess: (joinedConversation) => {
+      queryClient.setQueryData(
+        ['conversations'],
+        (oldCache?: Conversation[]) => {
+          const old: Conversation[] = oldCache ?? [];
+          const newConversations = [joinedConversation, ...old];
+
+          return newConversations;
+        },
+      );
+
+      router.push(joinedConversation.url);
     },
   });
 };

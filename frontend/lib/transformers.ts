@@ -58,9 +58,14 @@ export const processRawConversation = (
   config: { selfId: string },
 ): Conversation => {
   const isOwn = !!config.selfId && config.selfId === raw.creatorId;
+  const participants = raw.participants.map(p => ({
+    role: p.role,
+    user: processRawUser(p.user),
+  }));
 
   return {
     ...raw,
+    participants,
     url: `/c/${raw.id}`,
     isOwn,
     createdAt: new Date(raw.createdAt),

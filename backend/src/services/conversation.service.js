@@ -14,19 +14,26 @@ export default function ConversationService({ repo, io }) {
         repo.conversation.select({ conversationIds }),
         repo.conversationParticipant.select({ conversationIds }),
       ])
-    
-      const roleMap = new Map(
-        participants.map(cp => [cp.conversationId, cp.role])
-      )
-      const memberCounter = new Map()
+
+      const userIds = [...new Set(participantsCombined.map(p => p.userId))]
+      const users = await repo.user.select({ userIds })
+
+      const userMap = new Map(users.map(u => [u.id, u]))
+
+      const participantsMap = new Map()
       for (const p of participantsCombined) {
-        memberCounter.set(p.conversationId, (memberCounter.get(p.conversationId) ?? 0) + 1)
+        if (!participantsMap.has(p.conversationId)) {
+          participantsMap.set(p.conversationId, [])
+        }
+        participantsMap.get(p.conversationId).push({
+          role: p.role,
+          user: userMap.get(p.userId)
+        })
       }
     
       const enrichedConversations = conversations.map(c => ({
         ...c,
-        role: roleMap.get(c.id),
-        memberCount: memberCounter.get(c.id),
+        participants: participantsMap.get(c.id) || [],
       }))
     
       return enrichedConversations
@@ -36,15 +43,38 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
-      const participants = await repo.conversationParticipant.select({ conversationId })
       const [conversation] = await repo.conversation.delete({ conversationId })
     
       const enrichedConversation = {
         ...conversation,
-        role: participants.find(p => p.userId === user.sub).role,
-        memberCount: participants.length - 1,
+        participants: [],
       }
 
+      return enrichedConversation
+    },
+
+    async get(conversationId) {
+      const { user } = getContext()
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+    
+      const [[conversation], participants] = await Promise.all([
+        repo.conversation.select({ conversationId }),
+        repo.conversationParticipant.select({ conversationId }),
+      ])
+    
+      const userIds = [participants.map(p => p.userId)]
+      const users = await repo.user.select({ userIds })
+    
+      const userMap = new Map(users.map(u => [u.id, u]))
+    
+      const enrichedConversation = {
+        ...conversation,
+        participants: participants.map(p => ({
+          role: p.role,
+          user: userMap.get(p.userId)
+        })),
+      }
+    
       return enrichedConversation
     },
 
@@ -52,17 +82,22 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
-      const [conversation] = await repo.conversation.insert([
-        { ...payload, creatorId: user.sub }
+      const [[conversation], currentUser] = await Promise.all([
+        repo.conversation.insert([
+          { ...payload, creatorId: user.sub }
+        ]),
+        repo.user.select({ userId: user.sub }),
       ])
       const [participant] = await repo.conversationParticipant.insert(
-        [{ userId: user.sub, conversationId: conversation.id, role: 'admin' }]
+        [{ userId: user.sub, conversationId: conversation.id, role: 'creator' }]
       )
 
       const enrichedConversation = {
         ...conversation,
-        role: participant.role,
-        memberCount: 1,
+        participants: [{
+          role: participant.role,
+          user: currentUser,
+        }],
       }
 
       return enrichedConversation
@@ -154,15 +189,12 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
       
-      const [messages, conversationParticipants] = await Promise.all([
-        repo.message.select({ conversationId }),
-        repo.conversationParticipant.select({ conversationId }),
-      ])
-    
+      const messages = await repo.message.select({ conversationId })
+
       const uniq = (arr) => [...new Set(arr)]
-      const userIds = uniq(conversationParticipants.map(cp => cp.userId))
+      const userIds = uniq([user.sub, ...messages.filter(m => !!m.senderId).map(message => message.senderId)])
       const agentIds = uniq([agentId, ...messages.filter(m => !!m.agentId).map(message => message.agentId)])
-    
+
       const [users, agents, [model]] = await Promise.all([
         repo.user.select({ userIds }),
         repo.agent.select({ agentIds }),
@@ -206,16 +238,16 @@ export default function ConversationService({ repo, io }) {
             return {
               role: 'user',
               content: [
-                `[sender: (${messageSender.id}) ${messageSender.name}]`,
+                `[sender: (${messageSender?.id}) ${messageSender?.name}]`,
                 '',
                 message.content,
               ].join('\n'),
             }
           case 'agent':
             return {
-              role: messageAgent.id === agentId ? 'assistant' : 'user',
-              content: messageAgent.id === agentId ? message.content : [
-                `[agent: (${messageAgent.id}) ${messageAgent.name}]`,
+              role: messageAgent?.id === agentId ? 'assistant' : 'user',
+              content: messageAgent?.id === agentId ? message.content : [
+                `[agent: (${messageAgent?.id}) ${messageAgent?.name}]`,
                 '',
                 message.content,
               ].join('\n'),
@@ -264,16 +296,18 @@ export default function ConversationService({ repo, io }) {
 
         let accDeltaContent = ''
         let accDeltaExtra = ''
-        const flush = () => {
+        const flush = (emit = false) => {
           streamedMessage.content += accDeltaContent
           streamedMessage.extra += accDeltaExtra
           
-          for (const participantId of userIds) {
-            io.of('/users').to(participantId).emit('receive-message-chunk', {
-              messageId: streamedMessage.id,
-              deltaContent: accDeltaContent,
-              deltaExtra: accDeltaExtra,
-            })
+          if (emit) {
+            for (const participantId of userIds) {
+              io.of('/users').to(participantId).emit('receive-message-chunk', {
+                messageId: streamedMessage.id,
+                deltaContent: accDeltaContent,
+                deltaExtra: accDeltaExtra,
+              })
+            }
           }
 
           accDeltaContent = ''
@@ -291,8 +325,9 @@ export default function ConversationService({ repo, io }) {
           accDeltaExtra += deltaExtra
 
           if (accDeltaContent.length + accDeltaExtra.length > ACC_CAPACITY) {
-            flush()
+            flush(true)
           }
+          flush()
         }
       } catch(e) {
         throw e
@@ -321,21 +356,25 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
-      const [[participant], participants, [conversation]] = await Promise.all([
-        repo.conversationParticipant.insert([{ userId, conversationId, role: 'member' }]),
+      const [participant] = await repo.conversationParticipant.insert([{ userId, conversationId, role: 'member' }])
+      const [participants, [conversation]] = await Promise.all([
         repo.conversationParticipant.select({ conversationId }),
         repo.conversation.select({ conversationId }),
       ])
-
+    
+      const userIds = [participants.map(p => p.userId)]
+      const users = await repo.user.select({ userIds })
+    
+      const userMap = new Map(users.map(u => [u.id, u]))
+    
       const enrichedConversation = {
         ...conversation,
-        role: participant.role,
-        memberCount: new Set([
-          ...participants.map(cp => cp.userId),
-          participant.userId
-        ]).size
+        participants: participants.map(p => ({
+          role: p.role,
+          user: userMap.get(p.userId)
+        })),
       }
-
+    
       return enrichedConversation
     },
 
@@ -343,39 +382,40 @@ export default function ConversationService({ repo, io }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
     
-      const [[participant], participants, [conversation]] = await Promise.all([
-        repo.conversationParticipant.delete({ userId, conversationId }),
-        repo.conversationParticipant.select({ conversationId }),
-        repo.conversation.select({ conversationId }),
-      ])
-    
-      const role = participant.role
-      const memberIds = new Set(participants.map(p => p.userId))
-      const memberCount = memberIds.size - (memberIds.has(participant.userId) ? 1 : 0)
-    
-      return {
+      const [conversation] = await repo.conversation.select({ conversationId })
+      await repo.conversationParticipant.delete({ userId, conversationId })
+
+      const enrichedConversation = {
         ...conversation,
-        role,
-        memberCount,
+        participants: [],
       }
+
+      return enrichedConversation
     },
 
     async updateParticipant({ userId, conversationId }, { role }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
     
-      const [[participant], participants, [conversation]] = await Promise.all([
-        repo.conversationParticipant.update({ userId, conversationId }, { role }),
+      await repo.conversationParticipant.update({ userId, conversationId }, { role })
+      const [participants, [conversation]] = await Promise.all([
         repo.conversationParticipant.select({ conversationId }),
         repo.conversation.select({ conversationId }),
       ])
-      
+    
+      const userIds = [participants.map(p => p.userId)]
+      const users = await repo.user.select({ userIds })
+    
+      const userMap = new Map(users.map(u => [u.id, u]))
+
       const enrichedConversation = {
         ...conversation,
-        role: participant.role,
-        memberCount: new Set(participants.map(cp => cp.userId)).size,
+        participants: participants.map(p => ({
+          role: p.role,
+          user: userMap.get(p.userId)
+        })),
       }
-
+    
       return enrichedConversation
     },
   }

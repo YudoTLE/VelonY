@@ -49,7 +49,7 @@ export const MessageContainer = ({
     if (!viewport) return;
 
     const delta = viewport.scrollHeight - viewport.scrollTop;
-    if (latestReceived?.isOwn || delta <= 700.0) {
+    if (latestReceived?.isOwn || delta <= 800.0) {
       viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
     }
   };

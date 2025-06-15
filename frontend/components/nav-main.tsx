@@ -1,7 +1,7 @@
 'use client';
 
 import { useSessionCollapseState } from '@/hooks/use-session-state';
-import { useFetchConversations, useDeleteConversation } from '@/hooks/use-conversations';
+import { useFetchConversations } from '@/hooks/use-conversations';
 import { useFetchDefaultAgents, useFetchSubscribedAgents, useFetchPrivateAgents } from '@/hooks/use-agents';
 import { useFetchDefaultModels, useFetchSubscribedModels, useFetchPrivateModels } from '@/hooks/use-models';
 
@@ -15,7 +15,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -31,8 +30,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import {
   ChevronRight,
-  MoreHorizontal,
-  Trash2,
   UsersRound,
   UserRound,
   PencilLine,
@@ -72,7 +69,7 @@ const SidebarNavSection = <T extends SidebarNavItem>({
     <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip={title}>
+          <SidebarMenuButton className="cursor-pointer" tooltip={title}>
             <Icon />
             <span>{title}</span>
             <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -222,41 +219,21 @@ export function NavGroupConversations() {
       title="Group"
       icon={UsersRound}
       sessionKey="velony:sidebar:group-conversations"
-      items={data?.filter(conversation => conversation.memberCount > 1) ?? []}
+      items={data?.filter(conversation => conversation.participants.length > 1) ?? []}
       isLoading={isPending}
     />
   );
 }
 export function NavPrivateConversations() {
   const { data, isPending } = useFetchConversations();
-  const { mutate: deleteConversation } = useDeleteConversation();
 
   return (
     <SidebarNavSection
       title="Private"
       icon={UserRound}
       sessionKey="velony:sidebar:private-conversations"
-      items={data?.filter(conversation => conversation.isOwn && conversation.memberCount === 1) ?? []}
+      items={data?.filter(conversation => conversation.isOwn && conversation.participants.length === 1) ?? []}
       isLoading={isPending}
-      renderDropdownTrigger={() => (
-        <>
-          <MoreHorizontal />
-          <span className="sr-only">More</span>
-        </>
-      )}
-      renderDropdown={conversation => (
-        <>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => {
-              deleteConversation(conversation.id);
-            }}
-          >
-            <Trash2 className="text-muted-foreground mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </>
-      )}
     />
   );
 }

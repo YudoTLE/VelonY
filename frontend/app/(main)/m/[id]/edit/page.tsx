@@ -364,6 +364,7 @@ const EditModelPage = () => {
                               </FormLabel>
                               <FormControl>
                                 <Switch
+                                  className="cursor-pointer"
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
                                 />
