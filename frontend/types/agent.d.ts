@@ -6,7 +6,7 @@ declare global {
     name: string
     description: string
     showDetails: boolean
-    systemPrompt?: string
+    systemPrompt: string | null
   };
 
   type AgentRaw = AgentData & {

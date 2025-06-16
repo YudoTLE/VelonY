@@ -25,10 +25,17 @@ export default function ModelService({ repo }) {
         subscriptionMap.get(modelId).add(userId)
       }
 
-      const enrichedModels = models.map(a => {
-        const set = subscriptionMap.get(a.id)
+      const enrichedModels = models.map(m => {
+        const set = subscriptionMap.get(m.id)
+        const isOwn = m.creatorId === user.sub
+        const showDetails = isOwn || m.showDetails
+
         return {
-          ...a,
+          ...m,
+          apiKey: isOwn ? m.apiKey : null,
+          llm: showDetails ? m.llm : null,
+          endpoint: showDetails ? m.endpoint : null,
+          config: showDetails ? m.config : null,
           isSubscribed: set?.has(user.sub) ?? false,
           subscriberCount: set?.size ?? 0,
         }
@@ -50,8 +57,15 @@ export default function ModelService({ repo }) {
         throw { status: 404, message: 'Model not found' }
       }
 
+      const isOwn = model.creatorId === user.sub
+      const showDetails = isOwn || model.showDetails
+
       const enrichedModel = {
         ...model,
+        apiKey: isOwn ? model.apiKey : null,
+        llm: showDetails ? model.llm : null,
+        endpoint: showDetails ? model.endpoint : null,
+        config: showDetails ? model.config : null,
         isSubscribed: subscriptions.some(sub => sub.userId === user.sub),
         subscriberCount: subscriptions.length
       }
@@ -77,11 +91,13 @@ export default function ModelService({ repo }) {
     
       const [[model], subscriptions, _] = await Promise.all(promises)
   
-      return {
+      const enrichedModel = {
         ...model,
         isSubscribed: subscriptions.some(s => s.userId === user.sub),
         subscriberCount: willBePublic ? subscriptions.length : 0,
       }
+
+      return enrichedModel
     },
 
     async create(payload) {
@@ -123,9 +139,16 @@ export default function ModelService({ repo }) {
         repo.modelSubscription.select({ modelId }),
         repo.model.select({ modelId }),
       ])
-
+      
+      const isOwn = model.creatorId === user.sub
+      const showDetails = isOwn || model.showDetails
+      
       const enrichedModel = {
         ...model,
+        apiKey: isOwn ? model.apiKey : null,
+        llm: showDetails ? model.llm : null,
+        endpoint: showDetails ? model.endpoint : null,
+        config: showDetails ? model.config : null,
         isSubscribed: true,
         subscriberCount: new Set([
           ...subscriptions.map(cp => cp.userId),
@@ -150,8 +173,15 @@ export default function ModelService({ repo }) {
       const subscriberIds = new Set(subscriptions.map(p => p.userId))
       const subscriberCount = subscriberIds.size - (subscriberIds.has(subscription.userId) ? 1 : 0)
 
+      const isOwn = model.creatorId === user.sub
+      const showDetails = isOwn || model.showDetails
+
       const enrichedModel = {
         ...model,
+        apiKey: isOwn ? model.apiKey : null,
+        llm: showDetails ? model.llm : null,
+        endpoint: showDetails ? model.endpoint : null,
+        config: showDetails ? model.config : null,
         isSubscribed,
         subscriberCount,
       }

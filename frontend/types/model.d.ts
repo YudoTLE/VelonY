@@ -12,10 +12,10 @@ declare global {
     name: string
     description: string
     showDetails: boolean
-    llm?: string
-    endpoint?: string
-    apiKey?: string
-    config?: ModelConfigField[]
+    llm: string | null
+    endpoint: string | null
+    apiKey: string | null
+    config: ModelConfigField[] | null
   };
 
   type ModelRaw = ModelData & {

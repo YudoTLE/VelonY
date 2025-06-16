@@ -27,8 +27,12 @@ export default function AgentService({ repo }) {
 
       const enrichedAgents = agents.map(a => {
         const set = subscriptionMap.get(a.id)
+        const isOwn = a.creatorId === user.sub
+        const showDetails = isOwn || a.showDetails
+
         return {
           ...a,
+          systemPrompt: showDetails ? a.systemPrompt : null,
           isSubscribed: set?.has(user.sub) ?? false,
           subscriberCount: set?.size ?? 0,
         }
@@ -50,8 +54,12 @@ export default function AgentService({ repo }) {
         throw { status: 404, message: 'Agent not found' }
       }
 
+      const isOwn = agent.creatorId === user.sub
+      const showDetails = isOwn || agent.showDetails
+
       const enrichedAgent = {
         ...agent,
+        systemPrompt: showDetails ? agent.systemPrompt : null,
         isSubscribed: subscriptions.some(sub => sub.userId === user.sub),
         subscriberCount: subscriptions.length
       }
@@ -76,12 +84,14 @@ export default function AgentService({ repo }) {
       }
     
       const [[agent], subscriptions, _] = await Promise.all(promises)
-  
-      return {
+
+      const enrichedAgent = {
         ...agent,
         isSubscribed: subscriptions.some(s => s.userId === user.sub),
         subscriberCount: willBePublic ? subscriptions.length : 0,
       }
+
+      return enrichedAgent
     },
 
     async create(payload) {
@@ -124,8 +134,12 @@ export default function AgentService({ repo }) {
         repo.agent.select({ agentId }),
       ])
 
+      const isOwn = agent.creatorId === user.sub
+      const showDetails = isOwn || agent.showDetails
+
       const enrichedAgent = {
         ...agent,
+        systemPrompt: showDetails ? agent.systemPrompt : null,
         isSubscribed: true,
         subscriberCount: new Set([
           ...subscriptions.map(cp => cp.userId),
@@ -150,8 +164,12 @@ export default function AgentService({ repo }) {
       const subscriberIds = new Set(subscriptions.map(p => p.userId))
       const subscriberCount = subscriberIds.size - (subscriberIds.has(subscription.userId) ? 1 : 0)
 
+      const isOwn = agent.creatorId === user.sub
+      const showDetails = isOwn || agent.showDetails
+
       const enrichedAgent = {
         ...agent,
+        systemPrompt: showDetails ? agent.systemPrompt : null,
         isSubscribed,
         subscriberCount,
       }
