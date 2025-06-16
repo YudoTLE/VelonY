@@ -3,7 +3,7 @@ import { Server } from 'socket.io'
 
 async function socketIOPlugin(fastify, options) {
   const io = new Server(fastify.server, options.io || {})
-  fastify.decorate('io', io)
+  fastify.decorate('realtime', io)
 
   fastify.addHook('onClose', (instance, done) => {
     io.close()
@@ -22,7 +22,7 @@ async function socketIOPlugin(fastify, options) {
 }
 
 export default fp(socketIOPlugin, {
-  name: 'fastify-socketio',
+  name: 'socketio',
   fastify: '5.x',
   dependencies: ['jwt']
 })

@@ -1,9 +1,10 @@
 import cors     from './cors.js'
 import jwt      from './jwt.js'
 import oauth2   from './oauth2.js'
-import redis from './redis.js'
-import socketio from './socketio.js'
+import redis    from './redis.js'
+import realtime from './realtime/index.js'
 import context  from './context.js'
+import formbody from './formbody.js'
 
 
 
@@ -12,6 +13,7 @@ export default [
   jwt,
   oauth2,
   redis,
-  socketio,
+  realtime,
   context,
+  formbody,
 ]

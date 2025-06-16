@@ -1,6 +1,6 @@
 import { getContext } from '../lib/async-local-storage.js'
 
-export default function MessageService({ repo, io }) {
+export default function MessageService({ repo, realtime }) {
   return {
     async delete(messageId) {
       const { user } = getContext()
@@ -22,7 +22,7 @@ export default function MessageService({ repo, io }) {
       }
 
       for (const participant of participants) {
-        io.of('/users').to(participant.userId).emit('remove-message', enrichedMessage)
+        realtime.of('/users').to(participant.userId).emit('remove-message', enrichedMessage)
       }
     
       return enrichedMessage

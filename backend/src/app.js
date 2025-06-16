@@ -38,8 +38,8 @@ app.register(async fastify => {
 
   const authService = Services.AuthService({ googleOAuth2: fastify.googleOAuth2, repo: repositories, fetch: global.fetch })
   const userService = Services.UserService({ repo: repositories })
-  const messageService = Services.MessageService({ repo: repositories, io: fastify.io })
-  const conversationService = Services.ConversationService({ repo: repositories, io: fastify.io })
+  const messageService = Services.MessageService({ repo: repositories, realtime: fastify.realtime })
+  const conversationService = Services.ConversationService({ repo: repositories, realtime: fastify.realtime })
   const modelService = Services.ModelService({ repo: repositories })
   const agentService = Services.AgentService({ repo: repositories })
 

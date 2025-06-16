@@ -1,10 +1,14 @@
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMe } from './use-users';
+
+import { Socket } from 'socket.io-client';
+import { Channel } from 'pusher-js';
 
 import { processRawMessage, processRawMessages, processRawConversation } from '@/lib/transformers';
 import { getSocket } from '@/lib/socket';
+import { getPusherChannel } from '@/lib/pusher';
 import api from '@/lib/axios';
 
 export const useFetchMessages = (conversationId: string) => {
@@ -207,15 +211,14 @@ export const useDeleteMessage = (conversationId: string) => {
 };
 
 export const useRealtimeSyncMessages = (conversationId: string) => {
-  const socket = getSocket('users');
   const queryClient = useQueryClient();
   const { data: me } = useMe();
 
+  const socketRef = useRef<Socket | null>(null);
+  const channelRef = useRef<Channel | null>(null);
+
   useEffect(() => {
-    if (!me) {
-      return;
-      throw new Error('Unauthenticated');
-    }
+    if (!me) return;
 
     const receiveMessageChunk = async (
       { messageId, deltaContent, deltaExtra }:
@@ -294,15 +297,43 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       );
     };
 
-    socket.on('receive-message-chunk', receiveMessageChunk);
-    socket.on('receive-message', receiveMessage);
-    socket.on('remove-message', removeMessage);
-    return () => {
-      socket.off('receive-message-chunk', receiveMessageChunk);
-      socket.off('receive-message', receiveMessage);
-      socket.off('remove-message', removeMessage);
-    };
-  }, [conversationId, queryClient, me, socket]);
+    switch (process.env.NEXT_PUBLIC_REALTIME_PROVIDER) {
+      case 'SOCKETIO': {
+        if (!socketRef.current) {
+          socketRef.current = getSocket('users');
+        }
+
+        socketRef.current.on('receive-message-chunk', receiveMessageChunk);
+        socketRef.current.on('receive-message', receiveMessage);
+        socketRef.current.on('remove-message', removeMessage);
+
+        return () => {
+          socketRef.current?.off('receive-message-chunk', receiveMessageChunk);
+          socketRef.current?.off('receive-message', receiveMessage);
+          socketRef.current?.off('remove-message', removeMessage);
+        };
+      }
+
+      case 'PUSHER': {
+        if (!channelRef.current) {
+          channelRef.current = getPusherChannel('users', me.id);
+        }
+
+        channelRef.current.bind('receive-message-chunk', receiveMessageChunk);
+        channelRef.current.bind('receive-message', receiveMessage);
+        channelRef.current.bind('remove-message', removeMessage);
+
+        return () => {
+          channelRef.current?.unbind('receive-message-chunk', receiveMessageChunk);
+          channelRef.current?.unbind('receive-message', receiveMessage);
+          channelRef.current?.unbind('remove-message', removeMessage);
+        };
+      }
+
+      default:
+        return () => {};
+    }
+  }, [conversationId, queryClient, me, socketRef, channelRef]);
 };
 
 export const useLatestReceivedMessageTime = (conversationId: string) => {

@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import { getContext } from '../lib/async-local-storage.js'
 
-export default function ConversationService({ repo, io }) {
+export default function ConversationService({ repo, realtime }) {
   return {
     async list() {
       const { user } = getContext()
@@ -174,7 +174,7 @@ export default function ConversationService({ repo, io }) {
     
       for (const participant of participants) {
         if (participant.userId !== user.sub) {
-          io.of('/users').to(participant.userId).emit('receive-message', enrichedMessage)
+          realtime.emit('users', participant.userId, 'receive-message', enrichedMessage)
         }
       }
     
@@ -281,6 +281,7 @@ export default function ConversationService({ repo, io }) {
           agentId,
           modelId,
         }])
+        console.log('MSG TEMP', streamedMessage)
 
         const enrichedStreamedMessage = {
           ...streamedMessage,
@@ -291,7 +292,7 @@ export default function ConversationService({ repo, io }) {
         }
 
         for (const participantId of userIds) {
-          io.of('/users').to(participantId).emit('receive-message', enrichedStreamedMessage)
+          realtime.emit('users', participantId, 'receive-message', enrichedStreamedMessage)
         }
 
         let accDeltaContent = ''
@@ -301,7 +302,7 @@ export default function ConversationService({ repo, io }) {
           streamedMessage.extra += accDeltaExtra
           
           for (const participantId of userIds) {
-            io.of('/users').to(participantId).emit('receive-message-chunk', {
+            realtime.emit('users', participantId, 'receive-message-chunk', {
               messageId: streamedMessage.id,
               deltaContent: accDeltaContent,
               deltaExtra: accDeltaExtra,
@@ -325,8 +326,8 @@ export default function ConversationService({ repo, io }) {
           if (accDeltaContent.length + accDeltaExtra.length > ACC_CAPACITY) {
             flush()
           }
-          flush()
         }
+        flush()
       } catch(e) {
         throw e
       } finally {
