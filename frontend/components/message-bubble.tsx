@@ -48,8 +48,8 @@ const MessageBubbleComponent = (
     deleteMutation(message.id);
   };
 
-  const isSameSenderAsPrev = (!!message.senderId && message.senderId === prevMessage?.senderId) || (message.isOwn === prevMessage?.isOwn);
-  const isSameSenderAsNext = (!!message.senderId && message.senderId === nextMessage?.senderId) || (message.isOwn === nextMessage?.isOwn);
+  const isSameSenderAsPrev = (!!message.senderId && message.senderId === prevMessage?.senderId) || (message.isOwn && (message.isOwn === prevMessage?.isOwn));
+  const isSameSenderAsNext = (!!message.senderId && message.senderId === nextMessage?.senderId) || (message.isOwn && (message.isOwn === nextMessage?.isOwn));
   const mergeWithPrev = isSameSenderAsPrev && prevMessage?.type === 'user';
   const mergeWithNext = isSameSenderAsNext && nextMessage?.type === 'user';
 
