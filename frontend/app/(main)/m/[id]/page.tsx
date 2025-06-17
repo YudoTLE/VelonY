@@ -48,15 +48,19 @@ const ViewModelPage = () => {
         <div className="absolute -bottom-6 -right-6 size-32 bg-cyan-400 rounded-full -z-10 blur-xl opacity-25" />
         <div className="absolute -bottom-12 -right-12 size-64 bg-blue-500 rounded-full -z-10 blur-2xl opacity-20" />
         <div className="absolute -bottom-20 -right-20 size-128 bg-purple-600 rounded-full -z-10 blur-3xl opacity-15" />
-        <Button
-          asChild
-          variant="link"
-          className="absolute top-0 right-0 text-blue-400 font-normal"
-        >
-          <Link href={`${model?.url}/edit`}>
-            edit
-          </Link>
-        </Button>
+
+        {model?.isOwn
+          && (
+            <Button
+              asChild
+              variant="link"
+              className="absolute top-0 right-0 text-blue-400 font-normal"
+            >
+              <Link href={`${model?.url}/edit`}>
+                edit
+              </Link>
+            </Button>
+          )}
 
         <CardHeader className="flex">
           {model?.visibility === 'default'

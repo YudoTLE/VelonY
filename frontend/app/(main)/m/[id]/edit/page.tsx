@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 
+import Error from 'next/error';
+
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -186,6 +188,10 @@ const EditModelPage = () => {
     });
     setShowVisibilityDialog(false);
   };
+
+  if (model && !model.isOwn) {
+    return <Error statusCode={404} />;
+  }
 
   if (fetchError) {
     return (
