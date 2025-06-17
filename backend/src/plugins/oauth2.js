@@ -13,6 +13,8 @@ export default fp(async function (fastify, options) {
       auth: fastifyOAuth2.GOOGLE_CONFIGURATION,
     },
     startRedirectPath: '/auth/google',
-    callbackUri: `${process.env.BASE_URL}:${process.env.PORT}/auth/google/callback`,
+    callbackUri: process.env.NODE_ENV === 'development'
+      ? `${process.env.BASE_URL}:${process.env.PORT}/auth/google/callback`
+      : `${process.env.BASE_URL}/auth/google/callback`,
   })
 })

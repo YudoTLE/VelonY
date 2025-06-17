@@ -4,8 +4,8 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server",
-    "start": "node server"
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "start": "cross-env NODE_ENV=production node src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +32,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.9",
     "pino-pretty": "^13.0.0"
   }
