@@ -281,7 +281,6 @@ export default function ConversationService({ repo, realtime }) {
           agentId,
           modelId,
         }])
-        console.log('MSG TEMP', streamedMessage)
 
         const enrichedStreamedMessage = {
           ...streamedMessage,
@@ -313,7 +312,7 @@ export default function ConversationService({ repo, realtime }) {
           accDeltaExtra = ''
         }
 
-        const ACC_CAPACITY = 100
+        const BUFFER_SIZE = parseInt(process.env.STREAM_BUFFER_SIZE) || 10
         for await (const chunk of stream) {
           const delta = chunk.choices[0]?.delta
           
@@ -323,7 +322,7 @@ export default function ConversationService({ repo, realtime }) {
           accDeltaContent += deltaContent
           accDeltaExtra += deltaExtra
 
-          if (accDeltaContent.length + accDeltaExtra.length > ACC_CAPACITY) {
+          if (accDeltaContent.length + accDeltaExtra.length > BUFFER_SIZE) {
             flush()
           }
         }
