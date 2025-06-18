@@ -143,7 +143,7 @@ const ConversationPage = () => {
       <div className="flex-1 flex flex-col px-1 relative items-center align-middle">
         <MessageContainer
           conversationId={id}
-          scrollOverlap={128}
+          scrollOverlap={150}
         />
         <MessageInput
           conversationId={id}

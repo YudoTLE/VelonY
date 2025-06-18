@@ -28,6 +28,8 @@ export const MessageContainer = ({
   useRealtimeSyncMessages(conversationId);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const getScrollElement = () => {
     if (!scrollAreaRef.current) return null;
@@ -43,20 +45,31 @@ export const MessageContainer = ({
 
   const virtualItems = virtualizer.getVirtualItems();
 
-  const scrollToBottom = () => {
-    if (!scrollAreaRef?.current) return;
+  useEffect(() => {
+    if (!bottomRef.current) return;
+
     const viewport = getScrollElement();
     if (!viewport) return;
 
-    const delta = viewport.scrollHeight - viewport.scrollTop;
-    if (latestReceived?.isOwn || delta <= 800.0) {
-      viewport.scrollTop = Math.max(viewport.scrollTop, viewport.scrollHeight);
+    const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 100;
+
+    if (latestReceived?.isOwn || isNearBottom) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [messages?.length, latestReceived]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [latestReceived]);
+    const viewport = getScrollElement();
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 100;
+      shouldAutoScrollRef.current = isNearBottom;
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (error) {
     return (
@@ -136,6 +149,7 @@ export const MessageContainer = ({
             })}
           </div>
         </div>
+        <div ref={bottomRef} style={{ height: 1 }} />
       </div>
     </ScrollArea>
   );
