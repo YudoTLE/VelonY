@@ -40,8 +40,8 @@ const ViewModelPage = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col justify-center items-center gap-5 overscroll-y-auto">
-      <Card className="relative size-fit m-4 px-8 max-w-2xl w-full bg-card/80">
+    <div className="flex-1 flex flex-col justify-center p-4 sm:p-12 overflow-clip items-center overscroll-y-auto">
+      <Card className="relative size-fit sm:px-4 max-w-2xl w-full bg-card/80">
         <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-25" />
         <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-20" />
         <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-15" />
@@ -65,14 +65,14 @@ const ViewModelPage = () => {
         <CardHeader className="flex">
           {model?.visibility === 'default'
             ? (
-                <Avatar className="size-15 mr-4 rounded-full">
+                <Avatar className="size-15 mr-2 sm:mr-4 rounded-full">
                   <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
                     <Cpu size="30" className="text-white" />
                   </AvatarFallback>
                 </Avatar>
               )
             : (
-                <Avatar className="size-24 mr-8 rounded-full">
+                <Avatar className="size-24 mr-4 sm:mr-8 rounded-full">
                   <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
                     <Cpu size="48" className="text-white" />
                   </AvatarFallback>

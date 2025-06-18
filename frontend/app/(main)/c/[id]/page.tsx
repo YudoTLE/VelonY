@@ -48,7 +48,7 @@ const ConversationPage = () => {
               )
             : (
                 <>
-                  <h2 className="text-lg truncate min-w-0 w-full">
+                  <h2 className="text-lg text-left truncate min-w-0 w-full">
                     {conversation?.title}
                   </h2>
                   <p className="text-muted-foreground text-xs">

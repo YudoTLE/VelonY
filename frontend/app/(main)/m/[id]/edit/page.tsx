@@ -211,8 +211,8 @@ const EditModelPage = () => {
 
   return (
     <>
-      <div className="flex-1 flex flex-col justify-center items-center gap-5 overscroll-y-auto">
-        <Card className="relative size-fit m-4 px-8 max-w-2xl w-full bg-card/80">
+      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-12 overflow-clip overscroll-y-auto">
+        <Card className="relative size-fit sm:px-4 max-w-2xl w-full bg-card/80">
           <div className="absolute -top-6 -left-6 size-32 bg-yellow-400 rounded-full -z-10 blur-xl opacity-25" />
           <div className="absolute -top-12 -left-12 size-64 bg-orange-500 rounded-full -z-10 blur-2xl opacity-20" />
           <div className="absolute -top-20 -left-20 size-128 bg-red-500 rounded-full -z-10 blur-3xl opacity-15" />
@@ -233,21 +233,11 @@ const EditModelPage = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <CardHeader className="flex">
-                {model?.visibility === 'default'
-                  ? (
-                      <Avatar className="size-15 mr-4 rounded-full">
-                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
-                          <Cpu size="30" className="text-white" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )
-                  : (
-                      <Avatar className="size-24 mr-8 rounded-full">
-                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
-                          <Cpu size="48" className="text-white" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                <Avatar className="size-24 mr-4 sm:mr-8 rounded-full">
+                  <AvatarFallback className="rounded-lg bg-gradient-to-br from-orange-500 to-blue-500 cursor-default">
+                    <Cpu size="48" className="text-white" />
+                  </AvatarFallback>
+                </Avatar>
                 <div className="">
                   <div className="text-2xl font-bold">
                     {model?.name}
@@ -322,7 +312,7 @@ const EditModelPage = () => {
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                          <FormItem className="flex items-baseline">
+                          <FormItem className="sm:flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               Name
                               {dirtyFields.name && '*'}
@@ -340,7 +330,7 @@ const EditModelPage = () => {
                         control={form.control}
                         name="description"
                         render={({ field }) => (
-                          <FormItem className="flex items-baseline">
+                          <FormItem className="sm:flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               Description
                               {dirtyFields.description && '*'}
@@ -383,7 +373,7 @@ const EditModelPage = () => {
                         control={form.control}
                         name="llm"
                         render={({ field }) => (
-                          <FormItem className="flex items-baseline">
+                          <FormItem className="sm:flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               Model
                               {dirtyFields.llm && '*'}
@@ -401,7 +391,7 @@ const EditModelPage = () => {
                         control={form.control}
                         name="endpoint"
                         render={({ field }) => (
-                          <FormItem className="flex items-baseline">
+                          <FormItem className="sm:flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               Endpoint
                               {dirtyFields.endpoint && '*'}
@@ -419,7 +409,7 @@ const EditModelPage = () => {
                         control={form.control}
                         name="apiKey"
                         render={({ field }) => (
-                          <FormItem className="flex items-baseline">
+                          <FormItem className="sm:flex items-baseline">
                             <FormLabel className="w-30 text-md">
                               API Key
                               {dirtyFields.apiKey && '*'}
@@ -434,7 +424,7 @@ const EditModelPage = () => {
                         )}
                       />
 
-                      <div className="flex items-baseline">
+                      <div className="sm:flex items-baseline space-y-2">
                         <FormLabel className="w-32 flex-shrink-0 text-md">
                           Config
                           {dirtyFields.config && '*'}
@@ -444,7 +434,7 @@ const EditModelPage = () => {
                             <div key={index} className="flex items-center gap-1">
                               <div className="flex">
                                 <Input
-                                  className="w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
+                                  className="w-25 sm:w-30 flex-shrink-0 rounded-r-none focus-within:z-10"
                                   value={field.name}
                                   onChange={(e) => {
                                     const newConfigField = [...form.getValues('config')];
@@ -520,7 +510,7 @@ const EditModelPage = () => {
                   </Button>
                 </div>
                 <div className="flex gap-3">
-                  <div>
+                  <div className="hidden sm:block">
                     <Button
                       variant="secondary"
                       type="button"
