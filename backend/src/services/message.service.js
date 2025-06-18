@@ -9,20 +9,15 @@ export default function MessageService({ repo, realtime }) {
       
       const [message] = await repo.message.delete({ messageId })
       const participants = await repo.conversationParticipant.select({ conversationId: message.conversationId })
-
-      const userIds = participants.map(p => p.userId)
-      const users = await repo.user.select({ userIds })
-    
-      const userMap = new Map(users.map(u => [u.id, u]))
     
       const enrichedMessage = {
         ...message,
-        senderName: userMap.get(message.senderId)?.name,
-        senderAvatar: userMap.get(message.senderId)?.avatarUrl,
+        senderName: '',
+        senderAvatar: '',
       }
 
       for (const participant of participants) {
-        realtime.of('/users').to(participant.userId).emit('remove-message', enrichedMessage)
+        realtime.emit('users', participant.userId, 'remove-message', enrichedMessage)
       }
     
       return enrichedMessage

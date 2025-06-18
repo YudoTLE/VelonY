@@ -31,10 +31,6 @@ export class PusherProvider extends RealtimeInterface {
         const user = this.fastify.jwt.verify(token)
         const socketId = request.body.socket_id
         const channel = request.body.channel_name
-        
-        console.log('🎯 User:', user)
-        console.log('🎯 Socket ID:', socketId)
-        console.log('🎯 Channel:', channel)
 
         if (!user) {
           return reply.code(403).send({ error: 'Unauthorized' })

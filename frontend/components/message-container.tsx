@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-import { useFetchMessages, useRealtimeSyncMessages, useLatestReceivedMessageTime } from '@/hooks/use-messages';
+import { useFetchMessages, useRealtimeSyncMessages } from '@/hooks/use-messages';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -23,7 +23,6 @@ export const MessageContainer = ({
   style?: React.CSSProperties
 }) => {
   const { data: messages, isPending, error } = useFetchMessages(conversationId);
-  const latestReceived = useLatestReceivedMessageTime(conversationId);
 
   useRealtimeSyncMessages(conversationId);
 
@@ -46,6 +45,7 @@ export const MessageContainer = ({
   const virtualItems = virtualizer.getVirtualItems();
 
   useEffect(() => {
+    if (!messages) return;
     if (!bottomRef.current) return;
 
     const viewport = getScrollElement();
@@ -53,10 +53,11 @@ export const MessageContainer = ({
 
     const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 100;
 
-    if (latestReceived?.isOwn || isNearBottom) {
+    const bottomMessage = messages[messages.length - 1];
+    if (bottomMessage.isOwn || isNearBottom) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages?.length, latestReceived]);
+  }, [messages]);
 
   useEffect(() => {
     const viewport = getScrollElement();

@@ -89,10 +89,6 @@ export const useSendMessageByConversation = (conversationId: string) => {
           return newMessages;
         },
       );
-      queryClient.setQueryData(
-        ['conversations', conversationId, 'latest-receive'],
-        () => ({ isOwn: true, time: new Date() }),
-      );
 
       return { prevCache, newMessageTemp };
     },
@@ -244,13 +240,11 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
           return newMessages;
         },
       );
-      queryClient.setQueryData(
-        ['conversations', conversationId, 'latest-receive'],
-        () => ({ isOwn: false, time: new Date() }),
-      );
     };
 
     const receiveMessage = async (newMessageRaw: MessageRaw) => {
+      if (newMessageRaw.conversationId !== conversationId) return;
+
       await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
       const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
@@ -272,13 +266,11 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
           return newMessages;
         },
       );
-      queryClient.setQueryData(
-        ['conversations', conversationId, 'latest-receive'],
-        () => ({ isOwn: false, time: new Date() }),
-      );
     };
 
     const removeMessage = async (deletedMessageRaw: MessageRaw) => {
+      if (deletedMessageRaw.conversationId !== conversationId) return;
+
       await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
       queryClient.setQueryData(
@@ -334,9 +326,4 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
         return () => {};
     }
   }, [conversationId, queryClient, me, socketRef, channelRef]);
-};
-
-export const useLatestReceivedMessageTime = (conversationId: string) => {
-  const queryClient = useQueryClient();
-  return queryClient.getQueryData<{ isOwn: boolean, time: Date }>(['conversations', conversationId, 'latest-receive']) ?? undefined;
 };
