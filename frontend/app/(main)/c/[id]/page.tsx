@@ -140,7 +140,7 @@ const ConversationPage = () => {
         </SheetContent>
       </Sheet>
 
-      <div className="flex-1 flex flex-col px-1 relative items-center align-middle">
+      <div className="flex-1 flex flex-col relative items-center align-middle">
         <MessageContainer
           conversationId={id}
           scrollOverlap={150}

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { ArrowUp, Bot, Cpu } from 'lucide-react';
+import { ArrowUp, Bot, Cpu, Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -64,28 +64,17 @@ export const MessageInput = ({
     const el = textareaRef.current;
     if (!el) return;
     const content = el?.value.trim();
-    // if (!content) return
+    if (!content) return;
 
-    const sendMessage = async () => {
+    const sendMessage = () => {
       if (conversationId) {
-        if (!!content) {
-          sendMessage1({
-            type: 'user',
-            content,
-            extra: '',
-          });
-          el.value = '';
-          resize();
-        }
-        else {
-          sendMessage1({
-            type: 'agent',
-            content: '',
-            extra: '',
-            ...(usedAgent && { agentId: usedAgent }),
-            ...(usedModel && { modelId: usedModel }),
-          });
-        }
+        sendMessage1({
+          type: 'user',
+          content,
+          extra: '',
+        });
+        el.value = '';
+        resize();
       }
       else {
         sendMessage2({
@@ -99,11 +88,37 @@ export const MessageInput = ({
 
     sendMessage();
   };
+  const handleTriggerBot = () => {
+    if (!usedAgent || !usedModel) return;
+
+    if (conversationId) {
+      sendMessage1({
+        type: 'agent',
+        content: `agent ${usedAgent}`,
+        extra: '',
+        agentId: usedAgent,
+        modelId: usedModel,
+      });
+    }
+    else {
+      sendMessage2({
+        type: 'agent',
+        content: `agent ${usedAgent}`,
+        extra: '',
+        agentId: usedAgent,
+        modelId: usedModel,
+      });
+      setEnabled(false);
+    }
+  };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-
       handleSendMessage();
+    }
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      handleTriggerBot();
     }
   };
 
@@ -135,9 +150,21 @@ export const MessageInput = ({
         </CardContent>
 
         <CardFooter className="gap-3">
+
+          <Button
+            type="button"
+            onClick={handleTriggerBot}
+            variant="outline"
+            className={cn(
+              'border-1 bg-transparent opacity-0 transition-opacity duration-300 group',
+              !isFetchAgentPending && !isFetchModelPending && 'opacity-100',
+            )}
+          >
+            <Sparkles />
+          </Button>
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
             <SelectTrigger className={cn(
-              'sm:w-[150px] opacity-0 transition-opacity duration-300 group',
+              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300 group',
               !isFetchAgentPending && 'opacity-100',
             )}
             >
@@ -161,7 +188,7 @@ export const MessageInput = ({
           </Select>
           <Select value={usedModel ?? ''} onValueChange={setUsedModel}>
             <SelectTrigger className={cn(
-              'sm:w-[150px] opacity-0 transition-opacity duration-300',
+              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300',
               !isFetchModelPending && 'opacity-100',
             )}
             >
@@ -186,8 +213,8 @@ export const MessageInput = ({
           <div className="mx-auto" />
           <Button
             onClick={handleSendMessage}
-            variant="ghost"
-            className="border-1"
+            variant="outline"
+            className="border-1 bg-transparent"
           >
             <ArrowUp />
           </Button>
