@@ -2,7 +2,7 @@ import * as changeKeys from 'change-case/keys'
 import { getContext } from '../lib/async-local-storage.js'
 import { mapSupabaseError } from '../lib/error.js'
 
-export default function ConversationParticipantsRepository() {
+export default function ConversationParticipantRepository() {
   return {
     async select(filter = {}) {
       const { supabase } = getContext()

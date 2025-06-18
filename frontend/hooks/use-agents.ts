@@ -1,4 +1,5 @@
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMe } from '@/hooks/use-users';
 
@@ -27,6 +28,42 @@ export const useFetchDefaultAgents = () => useFetchAgents('visibility=default');
 export const useFetchSubscribedAgents = () => useFetchAgents('subscriberId=<me>');
 export const useFetchPrivateAgents = () => useFetchAgents('creatorId=<me>');
 export const useFetchPublicAgents = () => useFetchAgents('visibility=public');
+export const useFetchAllMyAgents = () => {
+  const defaultAgents = useFetchDefaultAgents();
+  const subscribedAgents = useFetchSubscribedAgents();
+  const privateAgents = useFetchPrivateAgents();
+
+  const isPending
+    = defaultAgents.isPending
+      || subscribedAgents.isPending
+      || privateAgents.isPending;
+
+  const isError
+    = defaultAgents.isError
+      || subscribedAgents.isError
+      || privateAgents.isError;
+
+  const data = useMemo(() => {
+    const all = [
+      ...(defaultAgents.data ?? []),
+      ...(subscribedAgents.data ?? []),
+      ...(privateAgents.data ?? []),
+    ];
+
+    const unique = new Map();
+    for (const model of all) {
+      unique.set(model.id, model);
+    }
+
+    return Array.from(unique.values());
+  }, [defaultAgents.data, subscribedAgents.data, privateAgents.data]);
+
+  return {
+    data,
+    isPending,
+    isError,
+  };
+};
 
 export const useUpdateAgentById = (agentId: string) => {
   const queryClient = useQueryClient();

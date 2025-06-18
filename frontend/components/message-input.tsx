@@ -3,8 +3,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAutosizeTextarea } from '@/hooks/use-autosize-textarea';
 import { useSendMessageByConversation, useSendMessageByNewConversation } from '@/hooks/use-messages';
-import { useFetchModels } from '@/hooks/use-models';
-import { useFetchAgents } from '@/hooks/use-agents';
+import { useFetchAllMyModels } from '@/hooks/use-models';
+import { useFetchAllMyAgents } from '@/hooks/use-agents';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -36,8 +36,8 @@ export const MessageInput = ({
 }) => {
   const { mutate: sendMessage1 } = useSendMessageByConversation(conversationId ?? '');
   const { mutate: sendMessage2 } = useSendMessageByNewConversation();
-  const { data: agentsQuery, isPending: isFetchAgentPending } = useFetchAgents();
-  const { data: modelsQuery, isPending: isFetchModelPending } = useFetchModels();
+  const { data: agentsQuery, isPending: isFetchAgentPending } = useFetchAllMyAgents();
+  const { data: modelsQuery, isPending: isFetchModelPending } = useFetchAllMyModels();
   const { textareaRef, resize } = useAutosizeTextarea();
 
   const agents = useMemo(() => agentsQuery ?? [], [agentsQuery]);
