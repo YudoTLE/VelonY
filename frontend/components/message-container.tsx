@@ -100,7 +100,7 @@ export const MessageContainer = ({
         style: { paddingBottom: `${scrollOverlap}px` },
       }}
     >
-      <div className="flex flex-col mx-auto py-3 px-5 max-w-4xl">
+      <div className="flex flex-col mx-auto py-3 px-1 sm:px-5 max-w-4xl">
         <div
           className="relative w-full"
           style={{

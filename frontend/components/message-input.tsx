@@ -108,10 +108,12 @@ export const MessageInput = ({
   };
 
   return (
-    <div className={cn('z-25 relative w-full max-w-2xl mx-auto group px-3', className)}>
-      <div className="absolute inset-0 inset-x-2 inset-y-2 group-focus-within:inset-x-0 group-focus-within:inset-y-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-xl blur-xl opacity-30 group-focus-within:opacity-70 transition transition-all-200 animate-tilt" />
+    <div className={cn('z-25 relative w-full max-w-2xl mx-auto group sm:px-3', className)}>
+      <div className="animate-tilt-container absolute inset-0 inset-x-2 inset-y-2 group-focus-within:inset-x-0 group-focus-within:inset-y-0">
+        <div className="w-full h-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-xl blur-xl opacity-30 group-focus-within:opacity-70 transition" />
+      </div>
 
-      <Card className="relative z-25 w-full py-4 gap-3 rounded-3xl bg-card/80 group-focus-within:bg-card/100">
+      <Card className="relative z-25 w-full py-4 gap-3 rounded-none rounded-t-3xl sm:rounded-3xl  bg-card/80 group-focus-within:bg-card/100">
         <CardContent>
           <ScrollArea
             className="flex flex-col flex-1 grow-1 basis-1 overflow-y-auto"
@@ -135,12 +137,14 @@ export const MessageInput = ({
         <CardFooter className="gap-3">
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
             <SelectTrigger className={cn(
-              'w-[150px] opacity-0 transition-opacity duration-300 group',
+              'sm:w-[150px] opacity-0 transition-opacity duration-300 group',
               !isFetchAgentPending && 'opacity-100',
             )}
             >
               <Bot />
-              <SelectValue placeholder="Agent" />
+              <div className="hidden sm:block truncate">
+                <SelectValue placeholder="Agent" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               {agents.map((agent) => {
@@ -157,12 +161,14 @@ export const MessageInput = ({
           </Select>
           <Select value={usedModel ?? ''} onValueChange={setUsedModel}>
             <SelectTrigger className={cn(
-              'w-[150px] opacity-0 transition-opacity duration-300',
+              'sm:w-[150px] opacity-0 transition-opacity duration-300',
               !isFetchModelPending && 'opacity-100',
             )}
             >
               <Cpu />
-              <SelectValue placeholder="Model" />
+              <div className="hidden sm:block truncate">
+                <SelectValue placeholder="Model" />
+              </div>
             </SelectTrigger>
             <SelectContent>
               {models.map((model) => {

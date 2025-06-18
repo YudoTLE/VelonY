@@ -43,7 +43,7 @@ const ConversationPage = () => {
             ? (
                 <>
                   <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-3 w-80" />
+                  <Skeleton className="h-3 w-30" />
                 </>
               )
             : (
@@ -71,7 +71,7 @@ const ConversationPage = () => {
               {createdText}
             </SheetDescription>
 
-            <Separator className="bg-black/30 py-1" />
+            <Separator />
 
             <div>
               <SheetDescription className="px-4 py-2">
@@ -102,7 +102,7 @@ const ConversationPage = () => {
               })}
             </div>
 
-            <Separator className="bg-black/30 py-1" />
+            <Separator />
 
             <div>
               {conversation?.isOwn === true
@@ -135,7 +135,7 @@ const ConversationPage = () => {
                 )}
             </div>
 
-            <Separator className="bg-black/30 py-1" />
+            <Separator />
           </ScrollArea>
         </SheetContent>
       </Sheet>
@@ -147,7 +147,7 @@ const ConversationPage = () => {
         />
         <MessageInput
           conversationId={id}
-          className="absolute bottom-3 left-1/2 transform -translate-x-1/2"
+          className="absolute bottom-0 sm:bottom-3 left-1/2 transform -translate-x-1/2"
           maxTextareaHeight={400}
         />
       </div>

@@ -55,19 +55,19 @@ const MessageBubbleComponent = (
 
   return (
     <div className={cn(
-      'flex group gap-2',
+      'flex group gap-1 sm:gap-2',
       message.isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto',
       message.status === 'deleting' && 'opacity-50',
     )}
     >
       {!mergeWithPrev
         ? (
-            <Avatar className="h-8 w-8 rounded-full mt-4">
+            <Avatar className={cn('h-8 w-8 rounded-full mt-4', message.isOwn && 'hidden sm:block')}>
               <AvatarImage src={message.senderAvatar} alt={message.senderName} />
               <AvatarFallback className="rounded-lg bg-purple-500 cursor-default">{message.initial}</AvatarFallback>
             </Avatar>
           )
-        : <div className="w-8 min-w-8" />}
+        : <div className={cn('w-8 min-w-8', message.isOwn && 'hidden sm:block')} />}
       <div className={cn(
         'grid gap-x-2 max-w-2xl',
         message.isOwn ? 'grid-cols-[auto_1fr]' : 'grid-cols-[1fr_auto]',
@@ -132,7 +132,7 @@ const MessageBubbleComponent = (
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="opacity-0 group-hover:opacity-80"
+                className="opacity-80 sm:opacity-0 group-hover:opacity-80"
               >
                 <EllipsisVertical />
               </Button>
@@ -294,12 +294,11 @@ const MessageBubbleAIComponent = (
             {format(message.createdAt, 'h.mm a')}
           </p>
         </div>
-        <div>
+        <div className="opacity-60 sm:opacity-30 relative group-hover:opacity-60">
           <Button
             onClick={handleCopyContent}
             variant="ghost"
             size="sm"
-            className="opacity-50 relative group-hover:opacity-80"
           >
             <Copy className={cn(
               'transition-all duration-200 ease-in-out',
@@ -318,13 +317,12 @@ const MessageBubbleAIComponent = (
             onClick={handleDelete}
             variant="ghost"
             size="sm"
-            className="opacity-50 group-hover:opacity-80"
           >
             <Trash />
           </Button>
         </div>
       </div>
-      <div className="w-10" />
+      <div className="w-10 hidden sm:block" />
     </div>
   );
 };

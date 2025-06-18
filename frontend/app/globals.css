@@ -152,4 +152,5 @@
 
 .animate-tilt {
   animation: tilt 3s infinite ease-in-out;
+  contain: layout;
 }
