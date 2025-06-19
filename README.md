@@ -1,6 +1,6 @@
 # VelonY
 
-![MIT License](https://img.shields.io/github/license/yourusername/velony)
+![MIT License](https://img.shields.io/github/license/YudoTLE/VelonY)
 
 VelonY is a powerful, extensible chatbot platform supporting **multi-agent** and **multi-user** interactions. Users can create their own agents and models, chat privately with multiple bots, or collaboratively in groups with friends. Built for flexibility and interactivity.
 
