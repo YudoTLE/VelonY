@@ -11,14 +11,14 @@ Try it here: [https://velony.vercel.app](https://velony.vercel.app)
 ## Features
 
 - **Private conversations with multiple agents**  
-  Chat with multiple bots in a private 1-on-1 convo.
+  Chat with multiple bots in a private convo.
   
-  ![Private Chat Screenshot](./screenshots/private-chat.png)
+  ![Private Conversation Screenshot](./screenshots/private-conversation.png)
 
 - **Group conversations with friends and bots**  
   Invite friends and have bots join the same room.
   
-  ![Group Chat Screenshot](./screenshots/group-chat.png)
+  ![Group Conversation Screenshot](./screenshots/group-conversation.png)
 
 - **Create your own agents and custom models**  
   Fully customizable agent and model creation.
