@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useAutosizeTextarea } from '@/hooks/use-autosize-textarea';
 import { useSendMessageByConversation, useSendMessageByNewConversation } from '@/hooks/use-messages';
 import { useFetchAllMyModels } from '@/hooks/use-models';
@@ -58,6 +58,32 @@ export const MessageInput = ({
     }
   }, [models, usedModel]);
 
+  const [triggerBotCuePlaying, setTriggerBotCuePlaying] = useState(false);
+  const [triggerBotUseCount, setTriggerBotUseCount] = useState(0);
+  const triggerBotTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetTriggerBotCueTimer = () => {
+    setTriggerBotCuePlaying(false);
+
+    if (triggerBotTimerRef.current) {
+      clearTimeout(triggerBotTimerRef.current);
+    }
+
+    triggerBotTimerRef.current = setTimeout(() => {
+      setTriggerBotCuePlaying(true);
+    }, 5000 * Math.pow(2, triggerBotUseCount));
+  };
+
+  useEffect(() => {
+    resetTriggerBotCueTimer();
+
+    return () => {
+      if (triggerBotTimerRef.current) {
+        clearTimeout(triggerBotTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleSendMessage = () => {
     if (!enabled) return;
 
@@ -65,6 +91,8 @@ export const MessageInput = ({
     if (!el) return;
     const content = el?.value.trim();
     if (!content) return;
+
+    resetTriggerBotCueTimer();
 
     const sendMessage = () => {
       if (conversationId) {
@@ -90,6 +118,9 @@ export const MessageInput = ({
   };
   const handleTriggerBot = () => {
     if (!usedAgent || !usedModel) return;
+
+    resetTriggerBotCueTimer();
+    setTriggerBotUseCount(triggerBotUseCount + 1);
 
     if (conversationId) {
       sendMessage1({
@@ -156,11 +187,13 @@ export const MessageInput = ({
             onClick={handleTriggerBot}
             variant="outline"
             className={cn(
-              'border-1 bg-transparent opacity-0 transition-opacity duration-300 group',
+              'border-1 bg-transparent opacity-0 transition-opacity duration-300 group relative',
               !isFetchAgentPending && !isFetchModelPending && 'opacity-100',
             )}
           >
-            <Sparkles />
+            <Sparkles className="absolute" />
+            <div className={cn('absolute opacity-0 rounded-full size-10 bg-white/10', triggerBotCuePlaying && 'opacity-100 animate-ping')} />
+            <Sparkles className={cn('text-blue-300', triggerBotCuePlaying && 'animate-pulse')} />
           </Button>
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
             <SelectTrigger className={cn(
