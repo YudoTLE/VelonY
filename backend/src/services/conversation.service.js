@@ -315,8 +315,8 @@ export default function ConversationService({ repo, realtime }) {
             if (accDeltaContent.length + accDeltaExtra.length > BUFFER_SIZE) {
               flush()
             }
-            flush()
           }
+          flush()
         } catch(e) {
           throw e
         } finally {
