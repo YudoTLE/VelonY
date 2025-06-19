@@ -1,5 +1,6 @@
 import { useDeleteMessage } from '@/hooks/use-messages';
 
+import { Player } from '@lottiefiles/react-lottie-player';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -217,7 +218,7 @@ const MessageBubbleAIComponent = (
         </div>
         {hasReasoning
           && (
-            <ScrollArea className="relative overflow-hidden grow-1 basis-1 max-h-30 flex flex-col flex-1 max-w-none prose prose-invert text-xs p-1 mb-2">
+            <ScrollArea className="relative overflow-hidden grow-1 basis-1 max-h-30 flex flex-col flex-1 max-w-none prose prose-invert text-xs p-1 mb-2 bg-blue-950/10">
               <div className="pointer-events-none absolute -top-1 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent z-10" />
               <div className="pointer-events-none absolute -bottom-1 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10" />
 
@@ -289,6 +290,17 @@ const MessageBubbleAIComponent = (
             {message.content}
           </ReactMarkdown>
         </div>
+        {message.status === 'sending' && !(message.content + message.extra)
+          && (
+            <span className="flex justify-begin w-full h-6 relative">
+              <Player
+                autoplay
+                loop
+                src="/animations/typing.json"
+                className=" absolute size-10 left-0 top-1/2 transform -translate-y-1/2"
+              />
+            </span>
+          )}
         <div>
           <p className="text-[10px]">
             {format(message.createdAt, 'h.mm a')}

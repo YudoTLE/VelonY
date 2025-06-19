@@ -14,6 +14,7 @@ export default function MessageService({ repo, realtime }) {
         ...message,
         senderName: '',
         senderAvatar: '',
+        status: 'deleted',
       }
 
       for (const participant of participants) {

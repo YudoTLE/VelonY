@@ -19,7 +19,7 @@ export const useFetchMessages = (conversationId: string) => {
     queryKey: ['conversations', conversationId, 'messages'],
     queryFn: async () => {
       const { data: messagesRaw } = await api.get<MessageRaw[]>(`conversations/${conversationId}/messages`);
-      const messages = processRawMessages(messagesRaw, { selfId: me!.id, status: 'sent' });
+      const messages = processRawMessages(messagesRaw, { selfId: me!.id });
       messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
       return messages;
@@ -65,7 +65,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
       }
 
       const { data: newMessageRaw } = await api.post<MessageRaw>(`/conversations/${conversationId}/messages`, payload);
-      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
+      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id });
 
       return newMessage;
     },
@@ -139,7 +139,7 @@ export const useSendMessageByNewConversation = () => {
       const newConversation = processRawConversation(newConversationRaw, { selfId: me.id });
 
       const { data: newMessageRaw } = await api.post<MessageRaw>(`/conversations/${newConversation.id}/messages`, payload);
-      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
+      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id });
 
       return { newMessage, newConversation };
     },
@@ -180,7 +180,7 @@ export const useDeleteMessage = (conversationId: string) => {
       }
 
       const { data: deletedMessageRaw } = await api.delete<MessageRaw>(`/messages/${messageId}`);
-      const deletedMessage = processRawMessage(deletedMessageRaw, { selfId: me.id, status: 'deleted' });
+      const deletedMessage = processRawMessage(deletedMessageRaw, { selfId: me.id });
 
       return deletedMessage;
     },
@@ -247,7 +247,7 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
 
       await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
 
-      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id, status: 'sent' });
+      const newMessage = processRawMessage(newMessageRaw, { selfId: me.id });
 
       queryClient.setQueryData(
         ['conversations', conversationId, 'messages'],

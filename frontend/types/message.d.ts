@@ -19,6 +19,7 @@ declare global {
     senderAvatar?: string
     agentName?: string
     modelName?: string
+    status: MessageStatus
 
     createdAt: string
     updatedAt: string
@@ -33,8 +34,8 @@ declare global {
     senderAvatar: string
     agentName: string
     modelName: string
-
     status: MessageStatus
+
     isOwn: boolean
     initial: string
 

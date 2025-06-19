@@ -18,7 +18,6 @@ export const processRawMessage = (
   raw: MessageRaw,
   config: {
     selfId: string
-    status: MessageStatus
   },
 ): Message => {
   const isOwn = !!config.selfId && config.selfId === raw.senderId;
@@ -35,7 +34,6 @@ export const processRawMessage = (
     senderAvatar,
     agentName,
     modelName,
-    status: config.status || 'sending',
     isOwn,
     initial,
     createdAt: new Date(raw.createdAt),
@@ -47,7 +45,6 @@ export const processRawMessages = (
   raws: MessageRaw[],
   config: {
     selfId: string
-    status: MessageStatus
   },
 ): Message[] => {
   return raws.map(message => processRawMessage(message, config));

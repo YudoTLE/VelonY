@@ -135,6 +135,7 @@ export default function ConversationService({ repo, realtime }) {
           senderAvatar: sender?.avatarUrl,
           agentName: agent?.name,
           modelName: model?.name,
+          status: 'sent',
         }
       })
     
@@ -170,6 +171,7 @@ export default function ConversationService({ repo, realtime }) {
         ...message,
         senderName: userMap.get(message.senderId)?.name ?? null,
         senderAvatar: userMap.get(message.senderId)?.avatarUrl ?? null,
+        status: 'sent',
       }
     
       for (const participant of participants) {
@@ -207,147 +209,152 @@ export default function ConversationService({ repo, realtime }) {
       const sender = userMap.get(user.sub)
       const agent = agentMap.get(agentId)
 
-      const modelConfig = Object.fromEntries(
-        model.config.map(({ name, value }) => [name, value])
-      )
-      
-      const openai = new OpenAI({
-        baseURL: model.endpoint,
-        apiKey: model.apiKey,
-      })
+      const [streamedMessage] = await repo.message.insert([{
+        senderId: user.sub,
+        conversationId,
+        content: '',
+        extra: '',
+        type: 'agent',
+        agentId,
+        modelId,
+      }])
 
-      const systemPrompt = {
-        role: 'system',
-        content: [
-          `# Identity`,
-          `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
-          `# Instruction`,
-          `- Always use the metadata to understand who is speaking.`,
-          `- Respond naturally as the agent, without repeating or referencing the metadata.`,
-          `- Maintain consistency as ${agent.name}.`,
-          `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
-          agent.systemPrompt,
-        ].join('\n'),
-      }
-      const messageLogs = messages.map((message) => {
-        const messageSender = userMap.get(message.senderId)
-        const messageAgent = agentMap.get(message.agentId)
+      const streamMessage = async () => {
+        const modelConfig = Object.fromEntries(
+          model.config.map(({ name, value }) => [name, value])
+        )
 
-        switch (message.type) {
-          case 'user':
-            return {
-              role: 'user',
-              content: [
-                `[sender: (${messageSender?.id}) ${messageSender?.name}]`,
-                '',
-                message.content,
-              ].join('\n'),
+        const openai = new OpenAI({
+          baseURL: model.endpoint,
+          apiKey: model.apiKey,
+        })
+
+        const systemPrompt = {
+          role: 'system',
+          content: [
+            `# Identity`,
+            `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
+            `# Instruction`,
+            `- Always use the metadata to understand who is speaking.`,
+            `- Respond naturally as the agent, without repeating or referencing the metadata.`,
+            `- Maintain consistency as ${agent.name}.`,
+            `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
+            agent.systemPrompt,
+          ].join('\n'),
+        }
+        const messageLogs = messages.map((message) => {
+          const messageSender = userMap.get(message.senderId)
+          const messageAgent = agentMap.get(message.agentId)
+
+          switch (message.type) {
+            case 'user':
+              return {
+                role: 'user',
+                content: [
+                  `[sender: (${messageSender?.id}) ${messageSender?.name}]`,
+                  '',
+                  message.content,
+                ].join('\n'),
+              }
+            case 'agent':
+              return {
+                role: messageAgent?.id === agentId ? 'assistant' : 'user',
+                content: messageAgent?.id === agentId ? message.content : [
+                  `[agent: (${messageAgent?.id}) ${messageAgent?.name}]`,
+                  '',
+                  message.content,
+                ].join('\n'),
+              }
+            default:
+              return null;
+          }
+        }).filter(Boolean)
+
+        const payload = {
+          model: model.llm,
+          stream: true,
+          ...modelConfig,
+          messages: [
+            systemPrompt,
+            ...messageLogs,
+            systemPrompt,
+          ],
+        }
+
+        const stream = await openai.chat.completions.create(payload)
+
+        try {
+          let accDeltaContent = ''
+          let accDeltaExtra = ''
+          const flush = () => {
+            streamedMessage.content += accDeltaContent
+            streamedMessage.extra += accDeltaExtra
+
+            for (const participantId of userIds) {
+              realtime.emit('users', participantId, 'receive-message-chunk', {
+                messageId: streamedMessage.id,
+                deltaContent: accDeltaContent,
+                deltaExtra: accDeltaExtra,
+              })
             }
-          case 'agent':
-            return {
-              role: messageAgent?.id === agentId ? 'assistant' : 'user',
-              content: messageAgent?.id === agentId ? message.content : [
-                `[agent: (${messageAgent?.id}) ${messageAgent?.name}]`,
-                '',
-                message.content,
-              ].join('\n'),
-            }
-          default:
-            return null;
-        }
-      }).filter(Boolean)
 
-      const payload = {
-        model: model.llm,
-        stream: true,
-        ...modelConfig,
-        messages: [
-          systemPrompt,
-          ...messageLogs,
-          systemPrompt,
-        ],
-      }
-
-      const stream = await openai.chat.completions.create(payload)
-
-      let streamedMessage
-      try {
-        [streamedMessage] = await repo.message.insert([{
-          senderId: user.sub,
-          conversationId,
-          content: '',
-          extra: '',
-          type: 'agent',
-          agentId,
-          modelId,
-        }])
-
-        const enrichedStreamedMessage = {
-          ...streamedMessage,
-          senderName: sender?.name,
-          senderAvatar: sender?.avatar,
-          agentName: agent?.name,
-          modelName: model?.name,
-        }
-
-        for (const participantId of userIds) {
-          realtime.emit('users', participantId, 'receive-message', enrichedStreamedMessage)
-        }
-
-        let accDeltaContent = ''
-        let accDeltaExtra = ''
-        const flush = () => {
-          streamedMessage.content += accDeltaContent
-          streamedMessage.extra += accDeltaExtra
-          
-          for (const participantId of userIds) {
-            realtime.emit('users', participantId, 'receive-message-chunk', {
-              messageId: streamedMessage.id,
-              deltaContent: accDeltaContent,
-              deltaExtra: accDeltaExtra,
-            })
+            accDeltaContent = ''
+            accDeltaExtra = ''
           }
 
-          accDeltaContent = ''
-          accDeltaExtra = ''
-        }
+          const BUFFER_SIZE = parseInt(process.env.STREAM_BUFFER_SIZE) || 10
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta
 
-        const BUFFER_SIZE = parseInt(process.env.STREAM_BUFFER_SIZE) || 10
-        for await (const chunk of stream) {
-          const delta = chunk.choices[0]?.delta
-          
-          const deltaContent = delta.content || ''
-          const deltaExtra = delta.reasoning_content || ''
+            const deltaContent = delta.content || ''
+            const deltaExtra = delta.reasoning_content || ''
 
-          accDeltaContent += deltaContent
-          accDeltaExtra += deltaExtra
+            accDeltaContent += deltaContent
+            accDeltaExtra += deltaExtra
 
-          if (accDeltaContent.length + accDeltaExtra.length > BUFFER_SIZE) {
-            flush()
+            if (accDeltaContent.length + accDeltaExtra.length > BUFFER_SIZE) {
+              flush()
+            }
           }
-        }
-        flush()
-      } catch(e) {
-        throw e
-      } finally {
-        const [[finalMessage], _] = await Promise.all([
-          repo.message.update({ messageId: streamedMessage.id }, {
+        } catch(e) {
+          throw e
+        } finally {
+          const [updatedMessage] = await repo.message.update({ messageId: streamedMessage.id }, {
             content: streamedMessage.content,
             extra: streamedMessage.extra,
-          }),
-          repo.conversation.update({ conversationId }, { updatedAt: new Date() })
-        ])
+          })
 
-        const finalEnrichedMessage = {
-          ...finalMessage,
-          senderName: sender?.name,
-          senderAvatar: sender?.avatar,
-          agentName: agent?.name,
-          modelName: model?.name,
+          const enrichedUpdatedMessage = {
+            ...updatedMessage,
+            senderName: sender?.name,
+            senderAvatar: sender?.avatar,
+            agentName: agent?.name,
+            modelName: model?.name,
+            status: 'sent',
+          }
+
+          for (const participantId of userIds) {
+            realtime.emit('users', participantId, 'receive-message', enrichedUpdatedMessage)
+          }
         }
-
-        return finalEnrichedMessage
       }
+      
+      const enrichedStreamedMessage = {
+        ...streamedMessage,
+        senderName: sender?.name,
+        senderAvatar: sender?.avatar,
+        agentName: agent?.name,
+        modelName: model?.name,
+        status: 'sending',
+      }
+
+      for (const participantId of userIds) {
+        realtime.emit('users', participantId, 'receive-message', enrichedStreamedMessage)
+      }
+
+      streamMessage()
+
+      return enrichedStreamedMessage;
     },
 
     async addParticipant({ userId, conversationId }) {
