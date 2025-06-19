@@ -187,12 +187,16 @@ export const MessageInput = ({
             onClick={handleTriggerBot}
             variant="outline"
             className={cn(
-              'border-1 bg-transparent opacity-0 transition-opacity duration-300 group relative',
+              'border-1 bg-transparent opacity-0 size-9 transition-opacity duration-300 group relative',
               !isFetchAgentPending && !isFetchModelPending && 'opacity-100',
             )}
           >
             <Sparkles className="absolute" />
-            <div className={cn('absolute opacity-0 rounded-full size-10 bg-white/10', triggerBotCuePlaying && 'opacity-100 animate-ping')} />
+            <div className={cn(
+              'absolute inset-0 opacity-0 rounded-full bg-white/10',
+              triggerBotCuePlaying && 'opacity-100 animate-ping',
+            )}
+            />
             <Sparkles className={cn('text-blue-300', triggerBotCuePlaying && 'animate-pulse')} />
           </Button>
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
@@ -247,7 +251,7 @@ export const MessageInput = ({
           <Button
             onClick={handleSendMessage}
             variant="outline"
-            className="border-1 bg-transparent"
+            className="border-1 size-9 bg-transparent"
           >
             <ArrowUp />
           </Button>
