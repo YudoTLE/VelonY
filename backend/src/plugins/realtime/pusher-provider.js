@@ -20,14 +20,9 @@ export class PusherProvider extends RealtimeInterface {
 
   setupConnection() {
     this.fastify.post('/pusher/auth', async (request, reply) => {
-      console.log('🎯 WOII COKKK KONTOLLLLLLLLLLLLLLLLLLL - AUTH ENDPOINT HIT!')
-      console.log('🎯 Request body:', request.body)
-      console.log('🎯 Request headers:', request.headers)
-      
       try {
         const token = request.body.auth || request.headers.authorization?.replace('Bearer ', '')
-        console.log('🎯 Token found:', !!token)
-        
+
         const user = this.fastify.jwt.verify(token)
         const socketId = request.body.socket_id
         const channel = request.body.channel_name
@@ -37,10 +32,8 @@ export class PusherProvider extends RealtimeInterface {
         }
 
         const auth = this.pusher.authorizeChannel(socketId, channel)
-        console.log('🎯 Auth response:', auth)
         return reply.send(auth)
       } catch (err) {
-        console.log('🎯 Error in auth:', err)
         return reply.code(401).send({ error: 'Invalid token' })
       }
     })
