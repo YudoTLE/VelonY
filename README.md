@@ -1,5 +1,9 @@
 # VelonY
 
+![Next.js](https://img.shields.io/badge/frontend-Next.js-black?logo=next.js&logoColor=white)
+![Fastify](https://img.shields.io/badge/backend-Fastify-yellow?logo=fastify)
+![Supabase](https://img.shields.io/badge/database-Supabase-3ECF8E?logo=supabase&logoColor=white)
+![ShadCN UI](https://img.shields.io/badge/ui-ShadCN-blueviolet)
 ![MIT License](https://img.shields.io/github/license/YudoTLE/VelonY)
 
 VelonY is a powerful, extensible chatbot platform supporting **multi-agent** and **multi-user** interactions. Users can create their own agents and models, chat privately with multiple bots, or collaboratively in groups with friends. Built for flexibility and interactivity.
