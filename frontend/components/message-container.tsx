@@ -54,7 +54,7 @@ export const MessageContainer = ({
     const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 100;
 
     const bottomMessage = messages[messages.length - 1];
-    if (bottomMessage.isOwn || isNearBottom) {
+    if ((bottomMessage.isOwn && bottomMessage.type === 'user') || isNearBottom) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
