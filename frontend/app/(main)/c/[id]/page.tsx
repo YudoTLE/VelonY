@@ -89,12 +89,12 @@ const ConversationPage = () => {
 
             <Separator />
 
-            <div>
-              <SheetDescription className="px-4 py-2">
+            <div className="px-4 py-2">
+              <SheetDescription>
                 invite link
               </SheetDescription>
 
-              <div className="flex gap-2 px-4 py-2">
+              <div className="flex gap-2">
                 <span className="text-blue-400">
                   {inviteLink}
                 </span>
