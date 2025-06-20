@@ -90,5 +90,23 @@ export default function ConversationParticipantRepository() {
       if (error) throw mapSupabaseError(error)
       return changeKeys.camelCase(data, 2)
     },
+
+    async upsert(payload = []) {
+      const { supabase } = getContext()
+    
+      const upserts = payload.map(values => Object.fromEntries(
+        Object.entries(values).filter(([_, v]) => v !== undefined)
+      ))
+    
+      let query = supabase
+        .from('conversation_participants')
+        .upsert(changeKeys.snakeCase(upserts, 2), { onConflict: 'user_id,conversation_id', ignoreDuplicates: true })
+        .select()
+    
+      const { data, error } = await query
+    
+      if (error) throw mapSupabaseError(error)
+      return changeKeys.camelCase(data, 2)
+    },
   }
 }

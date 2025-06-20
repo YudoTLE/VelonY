@@ -362,7 +362,7 @@ export default function ConversationService({ repo, realtime }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
 
-      await repo.conversationParticipant.insert([{ userId, conversationId, role: 'member' }])
+      await repo.conversationParticipant.upsert([{ userId, conversationId, role: 'member' }])
       const [participants, [conversation]] = await Promise.all([
         repo.conversationParticipant.select({ conversationId }),
         repo.conversation.select({ conversationId }),

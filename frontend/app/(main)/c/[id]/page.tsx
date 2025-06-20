@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import { useFetchConversationsById, useDeleteConversationById, useExitConversationById } from '@/hooks/use-conversations';
 
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageContainer } from '@/components/message-container';
 import { MessageInput } from '@/components/message-input';
@@ -20,7 +22,9 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { LogOut, Trash } from 'lucide-react';
+import { Copy, Check, LogOut, Trash } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 
 import { format } from 'date-fns';
 
@@ -32,8 +36,22 @@ const ConversationPage = () => {
   const { mutate: deleteConversation } = useDeleteConversationById(id);
   const { mutate: exitConversation } = useExitConversationById(id);
 
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
+
+  const handleInviteLinkCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedInviteLink(true);
+      setTimeout(() => setCopiedInviteLink(false), 2000);
+    }
+    catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
   const creator = conversation?.participants.find(p => p.role === 'creator')?.user;
   const createdText = `created by ${creator?.name} on ${format(conversation?.createdAt ?? 0, 'm/d/y')} at ${format(conversation?.createdAt ?? 0, 'h.mm a')}`;
+  const inviteLink = `${process.env.NEXT_PUBLIC_BASE_URL}/j/${id}`;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -65,11 +83,42 @@ const ConversationPage = () => {
               </SheetTitle>
             </SheetHeader>
 
-            <Separator />
-
             <SheetDescription className="px-4 py-2">
               {createdText}
             </SheetDescription>
+
+            <Separator />
+
+            <div>
+              <SheetDescription className="px-4 py-2">
+                invite link
+              </SheetDescription>
+
+              <div className="flex gap-2 px-4 py-2">
+                <span className="text-blue-400">
+                  {inviteLink}
+                </span>
+                <Button
+                  onClick={handleInviteLinkCopy}
+                  variant="ghost"
+                  size="xs"
+                  className="relative"
+                >
+                  <Copy className={cn(
+                    'transition-all duration-200 ease-in-out',
+                    copiedInviteLink ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
+                  )}
+                  />
+                  <div className={cn(
+                    'absolute inset-0 flex items-center justify-center transition-all duration-200 ease-in-out',
+                    copiedInviteLink ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+                  )}
+                  >
+                    <Check />
+                  </div>
+                </Button>
+              </div>
+            </div>
 
             <Separator />
 

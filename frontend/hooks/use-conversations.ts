@@ -168,7 +168,56 @@ export const useJoinConversation = () => {
         ['conversations'],
         (oldCache?: Conversation[]) => {
           const old: Conversation[] = oldCache ?? [];
-          const newConversations = [joinedConversation, ...old];
+          const newConversations = [...old];
+
+          const at = newConversations.findIndex(c => c.id === joinedConversation.id);
+          if (at === -1) {
+            newConversations.unshift(joinedConversation);
+          }
+          else {
+            newConversations[at] = joinedConversation;
+          }
+
+          return newConversations;
+        },
+      );
+
+      router.push(joinedConversation.url);
+    },
+  });
+};
+
+export const useJoinConversationById = (conversationId: string) => {
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: joinedConversationRaw } = await api.post<ConversationRaw>(`/conversations/${conversationId}/participants/self`);
+      const joinedConversation = processRawConversation(joinedConversationRaw, { selfId: me.id });
+
+      return joinedConversation;
+    },
+
+    onSuccess: (joinedConversation) => {
+      queryClient.setQueryData(
+        ['conversations'],
+        (oldCache?: Conversation[]) => {
+          const old: Conversation[] = oldCache ?? [];
+          const newConversations = [...old];
+
+          const at = newConversations.findIndex(c => c.id === joinedConversation.id);
+          if (at === -1) {
+            newConversations.unshift(joinedConversation);
+          }
+          else {
+            newConversations[at] = joinedConversation;
+          }
 
           return newConversations;
         },

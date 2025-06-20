@@ -71,7 +71,7 @@ export const MessageInput = ({
 
     triggerBotTimerRef.current = setTimeout(() => {
       setTriggerBotCuePlaying(true);
-    }, 5000 * Math.pow(2, triggerBotUseCount));
+    }, 5000 * Math.pow(3, triggerBotUseCount));
   };
 
   useEffect(() => {
