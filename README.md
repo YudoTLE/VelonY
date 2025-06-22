@@ -40,7 +40,7 @@ Try it here: [https://velony.vercel.app](https://velony.vercel.app)
 - **Fully responsive design**  
   Works seamlessly on desktop, tablet, and mobile devices.
   
-  ![Mobile Screenshot](./screenshots/mobile-view.jpg)
+  <img src="./screenshots/mobile-view.jpg" width="50%" alt="Mobile Screenshot">
 
 ## Concepts
 
