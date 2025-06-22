@@ -63,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Sidebar {...props}>
         <SidebarHeader>
           <div className="flex gap-2 no-underline text-3xl font-bold mx-auto my-3">
-            <Image src="/icon.png" alt="VelonY Logo" width={32} height={32} />
+            <Image src="/images/velony-icon.png" alt="VelonY Logo" width={32} height={32} />
             <h1 className="">
               VelonY
             </h1>
