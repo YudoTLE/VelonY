@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import { useSessionTabState } from '@/hooks/use-session-state';
 
@@ -61,11 +62,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     >
       <Sidebar {...props}>
         <SidebarHeader>
-          <Link href="/" className="no-underline text-3xl font-bold mx-auto my-3">
+          <div className="flex gap-2 no-underline text-3xl font-bold mx-auto my-3">
+            <Image src="/icon.png" alt="VelonY Logo" width={32} height={32} />
             <h1 className="">
               VelonY
             </h1>
-          </Link>
+          </div>
           <TabsList className="w-full my-0">
             <TabsTrigger className="cursor-pointer" value="conversations"><MessageSquare /></TabsTrigger>
             <TabsTrigger className="cursor-pointer" value="agents"><Bot /></TabsTrigger>

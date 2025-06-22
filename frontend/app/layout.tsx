@@ -5,7 +5,6 @@ import './globals.css';
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import Head from 'next/head';
 
 import { ThemeProvider } from '@/components/theme-provider';
 
@@ -14,10 +13,6 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <Head>
-        <title>VelonY</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <html lang="en" suppressHydrationWarning>
         <head />
         <body className="overscroll-none">
