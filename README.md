@@ -40,7 +40,7 @@ Try it here: [https://velony.vercel.app](https://velony.vercel.app)
 - **Fully responsive design**  
   Works seamlessly on desktop, tablet, and mobile devices.
   
-  ![Mobile Screenshot](./screenshots/mobile-view.png)
+  ![Mobile Screenshot](./screenshots/mobile-view.jpg)
 
 ## Concepts
 
