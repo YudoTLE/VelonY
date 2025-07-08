@@ -220,6 +220,8 @@ export default function ConversationService({ repo, realtime }) {
       }])
 
       const streamMessage = async () => {
+        try {
+
         const modelConfig = Object.fromEntries(
           model.config.map(({ name, value }) => [name, value])
         )
@@ -283,7 +285,6 @@ export default function ConversationService({ repo, realtime }) {
 
         const stream = await openai.chat.completions.create(payload)
 
-        try {
           let accDeltaContent = ''
           let accDeltaExtra = ''
           const flush = () => {
@@ -318,7 +319,7 @@ export default function ConversationService({ repo, realtime }) {
           }
           flush()
         } catch(e) {
-          throw e
+          console.error('Streaming error:', e)
         } finally {
           const [updatedMessage] = await repo.message.update({ messageId: streamedMessage.id }, {
             content: streamedMessage.content,
