@@ -1,14 +1,5 @@
-import {
-  ChevronsUpDown,
-  LogOut,
-  Sparkles,
-} from 'lucide-react';
-import Link from 'next/link';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { ChevronsUpDown, Sparkles } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +17,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMe } from '@/hooks/use-users';
+import LogoutButton from '@/components/logout-button';
 
-const NavUserContent = ({ user, isPending }: { user?: User, isPending: boolean }) => {
+const NavUserContent = ({
+  user,
+  isPending,
+}: {
+  user?: User
+  isPending: boolean
+}) => {
   return (
     <>
       {isPending
@@ -88,15 +86,14 @@ export function NavUser() {
                 <Sparkles />
                 Upgrade to Pro
                 {' '}
-                <span className="italic text-muted-foreground">coming soon?</span>
+                <span className="italic text-muted-foreground">
+                  coming soon?
+                </span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`${process.env.BACKEND_URL}/auth/logout`}>
-                <LogOut />
-                Log out
-              </Link>
+              <LogoutButton />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
