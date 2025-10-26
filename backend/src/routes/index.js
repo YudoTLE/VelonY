@@ -12,4 +12,8 @@ export default async function routes(fastify, options) {
   fastify.register(messageRoutes,      { prefix: '/messages' })
   fastify.register(modelRoutes,        { prefix: '/models' })
   fastify.register(agentRoutes,        { prefix: '/agents' })
+
+  fastify.get('/ping', async (req, reply) => {
+    reply.code(200).send({ ok: true });
+  });
 }
