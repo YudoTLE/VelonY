@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useFetchAgentById, useToggleAgentSubscriptionById } from '@/hooks/use-agents';
 
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { getAgentAvatarUrl } from '@/lib/agent-avatar';
 
 import {
   Bot,
@@ -66,6 +67,7 @@ const ViewAgentPage = () => {
           {agent?.visibility === 'default'
             ? (
                 <Avatar className="size-15 mr-2 sm:mr-4 rounded-full">
+                  <AvatarImage src={getAgentAvatarUrl(agent?.id)} alt={agent?.name} className="object-cover" />
                   <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
                     <Bot size="30" className="text-white" />
                   </AvatarFallback>
@@ -73,6 +75,7 @@ const ViewAgentPage = () => {
               )
             : (
                 <Avatar className="size-24 mr-4 sm:mr-8 rounded-full">
+                  <AvatarImage src={getAgentAvatarUrl(agent?.id)} alt={agent?.name} className="object-cover" />
                   <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
                     <Bot size="48" className="text-white" />
                   </AvatarFallback>

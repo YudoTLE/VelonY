@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import Error from 'next/error';
 
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getAgentAvatarUrl } from '@/lib/agent-avatar';
 
 import { LoaderCircle, X, Bot } from 'lucide-react';
 
@@ -153,6 +154,7 @@ const EditAgentPage = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <CardHeader className="flex">
                 <Avatar className="size-24 mr-4 sm:mr-8 rounded-full">
+                  <AvatarImage src={getAgentAvatarUrl(agent?.id)} alt={agent?.name} className="object-cover" />
                   <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
                     <Bot size="48" className="text-white" />
                   </AvatarFallback>
