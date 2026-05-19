@@ -207,7 +207,7 @@ const MessageBubbleAIComponent = (
     )}
     >
       <Avatar className="h-8 w-8 rounded-full mt-4 mr-1">
-        <AvatarImage src={getAgentAvatarUrl(message.agentId)} alt={message.agentName} className="object-cover" />
+        <AvatarImage src={getAgentAvatarUrl(message.agentId, message.agentUpdatedAt)} alt={message.agentName} className="object-cover" />
         <AvatarFallback className="rounded-lg bg-purple-500 cursor-default">{message.initial}</AvatarFallback>
       </Avatar>
       <div className="w-full min-w-0">

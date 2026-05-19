@@ -75,6 +75,48 @@ const updateAgentCaches = (
   queryClient.invalidateQueries({ queryKey: ['agents'] });
 };
 
+const updateMessageAgentAvatarVersions = (
+  queryClient: QueryClient,
+  updatedAgent: Agent,
+) => {
+  queryClient.setQueriesData(
+    { queryKey: ['conversations'] },
+    (oldCache: unknown) => {
+      if (!Array.isArray(oldCache)) {
+        return oldCache;
+      }
+
+      const isMessageCache = oldCache.every(item =>
+        item
+        && typeof item === 'object'
+        && 'conversationId' in item
+        && 'content' in item
+        && 'status' in item,
+      );
+
+      if (!isMessageCache) {
+        return oldCache;
+      }
+
+      let changed = false;
+      const newMessages = oldCache.map((message) => {
+        const typedMessage = message as Message;
+        if (typedMessage.agentId !== updatedAgent.id) {
+          return typedMessage;
+        }
+
+        changed = true;
+        return {
+          ...typedMessage,
+          agentUpdatedAt: updatedAgent.updatedAt,
+        };
+      });
+
+      return changed ? newMessages : oldCache;
+    },
+  );
+};
+
 export const useFetchAgents = (query = '') => {
   const { data: me } = useMe();
 
@@ -156,6 +198,7 @@ export const useUpdateAgentById = (agentId: string) => {
       }
 
       updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
+      updateMessageAgentAvatarVersions(queryClient, updatedAgent);
     },
   });
 };
@@ -191,6 +234,7 @@ export const useUpdateAgentAvatarById = (agentId: string) => {
       }
 
       updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
+      updateMessageAgentAvatarVersions(queryClient, updatedAgent);
     },
   });
 };

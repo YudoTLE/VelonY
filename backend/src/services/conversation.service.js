@@ -134,6 +134,7 @@ export default function ConversationService({ repo, realtime }) {
           senderName: sender?.name,
           senderAvatar: sender?.avatarUrl,
           agentName: agent?.name,
+          agentUpdatedAt: agent?.updatedAt,
           modelName: model?.name,
           status: 'sent',
         }
@@ -336,6 +337,7 @@ export default function ConversationService({ repo, realtime }) {
             senderName: sender?.name,
             senderAvatar: sender?.avatar,
             agentName: agent?.name,
+            agentUpdatedAt: agent?.updatedAt,
             modelName: model?.name,
             status: 'sent',
           }
@@ -351,6 +353,7 @@ export default function ConversationService({ repo, realtime }) {
         senderName: sender?.name,
         senderAvatar: sender?.avatar,
         agentName: agent?.name,
+        agentUpdatedAt: agent?.updatedAt,
         modelName: model?.name,
         status: 'sending',
       }

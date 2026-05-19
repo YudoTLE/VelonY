@@ -38,6 +38,7 @@ export const processRawMessage = (
     initial,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
+    agentUpdatedAt: raw.agentUpdatedAt ? new Date(raw.agentUpdatedAt) : undefined,
   };
 };
 

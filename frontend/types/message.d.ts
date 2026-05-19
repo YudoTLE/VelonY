@@ -18,6 +18,7 @@ declare global {
     senderName?: string
     senderAvatar?: string
     agentName?: string
+    agentUpdatedAt?: string
     modelName?: string
     status: MessageStatus
 
@@ -33,6 +34,7 @@ declare global {
     senderName: string
     senderAvatar: string
     agentName: string
+    agentUpdatedAt?: Date
     modelName: string
     status: MessageStatus
 
