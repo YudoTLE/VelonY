@@ -287,13 +287,18 @@ export default function ConversationService({ repo, realtime }) {
 
           let accDeltaContent = ''
           let accDeltaExtra = ''
+          let chunkIndex = 0
           const flush = () => {
+            if (!accDeltaContent && !accDeltaExtra) return
+
             streamedMessage.content += accDeltaContent
             streamedMessage.extra += accDeltaExtra
+            chunkIndex += 1
 
             for (const participantId of userIds) {
               realtime.emit('users', participantId, 'receive-message-chunk', {
                 messageId: streamedMessage.id,
+                chunkIndex,
                 deltaContent: accDeltaContent,
                 deltaExtra: accDeltaExtra,
               })

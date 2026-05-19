@@ -11,6 +11,18 @@ import { getSocket } from '@/lib/socket';
 import { getPusherChannel } from '@/lib/pusher';
 import api from '@/lib/axios';
 
+type MessageChunkPayload = {
+  messageId: Message['id'];
+  chunkIndex?: number;
+  deltaContent: Message['content'];
+  deltaExtra: Message['extra'];
+};
+
+type MessageChunkState = {
+  nextIndex: number;
+  pending: Map<number, MessageChunkPayload>;
+};
+
 export const useFetchMessages = (conversationId: string) => {
   const { data: me } = useMe();
 
@@ -212,23 +224,48 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
 
   const socketRef = useRef<Socket | null>(null);
   const channelRef = useRef<Channel | null>(null);
+  const chunkBuffersRef = useRef<Map<Message['id'], MessageChunkState>>(new Map());
+  const completedMessageIdsRef = useRef<Set<Message['id']>>(new Set());
 
   useEffect(() => {
     if (!me) return;
 
-    const receiveMessageChunk = async (
-      { messageId, deltaContent, deltaExtra }:
-      { messageId: Message['id'], deltaContent: Message['content'], deltaExtra: Message['extra'] }) => {
-      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+    const messagesQueryKey = ['conversations', conversationId, 'messages'] as const;
+
+    const getChunkState = (messageId: Message['id']) => {
+      const existing = chunkBuffersRef.current.get(messageId);
+      if (existing) {
+        return existing;
+      }
+
+      const nextState: MessageChunkState = {
+        nextIndex: 1,
+        pending: new Map<number, MessageChunkPayload>(),
+      };
+      chunkBuffersRef.current.set(messageId, nextState);
+
+      return nextState;
+    };
+
+    const appendMessageChunk = async ({
+      messageId,
+      deltaContent,
+      deltaExtra,
+    }: MessageChunkPayload) => {
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey });
 
       queryClient.setQueryData(
-        ['conversations', conversationId, 'messages'],
+        messagesQueryKey,
         (oldCache?: Message[]) => {
           const old: Message[] = oldCache || [];
           const newMessages = [...old];
 
           const at = newMessages.findIndex(message => message.id === messageId);
           if (at !== -1) {
+            if (newMessages[at].status !== 'sending') {
+              return newMessages;
+            }
+
             newMessages[at] = {
               ...newMessages[at],
               content: newMessages[at].content + deltaContent,
@@ -242,15 +279,62 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
       );
     };
 
+    const flushQueuedMessageChunks = async (messageId: Message['id']) => {
+      if (completedMessageIdsRef.current.has(messageId)) return;
+
+      const state = chunkBuffersRef.current.get(messageId);
+      if (!state) return;
+
+      const messages = queryClient.getQueryData<Message[]>(messagesQueryKey) ?? [];
+      const message = messages.find(m => m.id === messageId);
+      if (!message || message.status !== 'sending') return;
+
+      let deltaContent = '';
+      let deltaExtra = '';
+
+      while (state.pending.has(state.nextIndex)) {
+        const chunk = state.pending.get(state.nextIndex)!;
+        deltaContent += chunk.deltaContent;
+        deltaExtra += chunk.deltaExtra;
+        state.pending.delete(state.nextIndex);
+        state.nextIndex += 1;
+      }
+
+      if (!deltaContent && !deltaExtra) return;
+
+      await appendMessageChunk({
+        messageId,
+        deltaContent,
+        deltaExtra,
+      });
+    };
+
+    const receiveMessageChunk = async (chunk: MessageChunkPayload) => {
+      const { messageId, chunkIndex } = chunk;
+
+      if (completedMessageIdsRef.current.has(messageId)) return;
+
+      if (!Number.isInteger(chunkIndex) || chunkIndex == null) {
+        await appendMessageChunk(chunk);
+        return;
+      }
+
+      const state = getChunkState(messageId);
+      if (chunkIndex < state.nextIndex) return;
+
+      state.pending.set(chunkIndex, chunk);
+      await flushQueuedMessageChunks(messageId);
+    };
+
     const receiveMessage = async (newMessageRaw: MessageRaw) => {
       if (newMessageRaw.conversationId !== conversationId) return;
 
-      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey });
 
       const newMessage = processRawMessage(newMessageRaw, { selfId: me.id });
 
       queryClient.setQueryData(
-        ['conversations', conversationId, 'messages'],
+        messagesQueryKey,
         (oldCache?: Message[]) => {
           const old: Message[] = oldCache || [];
           const newMessages = [...old];
@@ -266,15 +350,25 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
           return newMessages;
         },
       );
+
+      if (newMessage.status === 'sending') {
+        completedMessageIdsRef.current.delete(newMessage.id);
+        getChunkState(newMessage.id);
+        await flushQueuedMessageChunks(newMessage.id);
+      }
+      else {
+        completedMessageIdsRef.current.add(newMessage.id);
+        chunkBuffersRef.current.delete(newMessage.id);
+      }
     };
 
     const removeMessage = async (deletedMessageRaw: MessageRaw) => {
       if (deletedMessageRaw.conversationId !== conversationId) return;
 
-      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey });
 
       queryClient.setQueryData(
-        ['conversations', conversationId, 'messages'],
+        messagesQueryKey,
         (oldCache?: Message[]) => {
           const old: Message[] = oldCache || [];
           const newMessages = [...old];
@@ -287,6 +381,9 @@ export const useRealtimeSyncMessages = (conversationId: string) => {
           return newMessages;
         },
       );
+
+      completedMessageIdsRef.current.add(deletedMessageRaw.id);
+      chunkBuffersRef.current.delete(deletedMessageRaw.id);
     };
 
     switch (process.env.NEXT_PUBLIC_REALTIME_PROVIDER) {
