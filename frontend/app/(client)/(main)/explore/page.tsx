@@ -74,7 +74,7 @@ const ExplorePage = () => {
                       <CardContent className="flex h-full space-y-2 translate-y-0.5 gap-4 group-hover:-translate-y-0.5 transition-all duration-300 ease-in-out">
                         <div>
                           <Avatar className="size-24 rounded-full">
-                            <AvatarImage src={getAgentAvatarUrl(agent.id)} alt={agent.name} className="object-cover" />
+                            <AvatarImage src={getAgentAvatarUrl(agent.id, agent.updatedAt)} alt={agent.name} className="object-cover" />
                             <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600">
                               <Bot size="48" className="text-white" />
                             </AvatarFallback>

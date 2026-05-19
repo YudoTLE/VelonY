@@ -41,7 +41,11 @@ app.register(async fastify => {
   const messageService = Services.MessageService({ repo: repositories, realtime: fastify.realtime })
   const conversationService = Services.ConversationService({ repo: repositories, realtime: fastify.realtime })
   const modelService = Services.ModelService({ repo: repositories })
-  const agentService = Services.AgentService({ repo: repositories })
+  const s3ObjectStorageService = Services.S3ObjectStorageService({ fetch: global.fetch })
+  const agentService = Services.AgentService({
+    repo: repositories,
+    avatarStorage: s3ObjectStorageService,
+  })
 
   fastify.decorate('authController', Controllers.AuthController({
     service: authService, jwt: fastify.jwt, log: fastify.log

@@ -1,10 +1,79 @@
-import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMe } from '@/hooks/use-users';
 
 import { processRawAgent, processRawAgents } from '@/lib/transformers';
 import api from '@/lib/axios';
+
+type ApiErrorResponse = {
+  response?: {
+    data?: {
+      error?: string
+      message?: string
+    }
+    status?: number
+    statusText?: string
+  }
+  message?: string
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiErrorResponse;
+    const responseMessage = apiError.response?.data?.error || apiError.response?.data?.message;
+
+    if (responseMessage) {
+      return responseMessage;
+    }
+
+    if (apiError.response?.status) {
+      return `${fallback} (${apiError.response.status}${apiError.response.statusText ? ` ${apiError.response.statusText}` : ''})`;
+    }
+
+    if (apiError.message) {
+      return apiError.message;
+    }
+  }
+
+  return fallback;
+};
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+const updateAgentCaches = (
+  queryClient: QueryClient,
+  agentId: string,
+  updatedAgent: Agent,
+  meId: string,
+) => {
+  queryClient.setQueryData(
+    ['agent', agentId],
+    () => updatedAgent,
+  );
+  queryClient.setQueryData(
+    ['agents', `creatorId=${meId}`],
+    (oldCache?: Agent[]) => {
+      const old: Agent[] = oldCache || [];
+      const newAgents = [...old];
+
+      const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
+      if (at !== -1) {
+        newAgents.splice(at, 1);
+      }
+      newAgents.unshift(updatedAgent);
+
+      return newAgents;
+    },
+  );
+  queryClient.invalidateQueries({ queryKey: ['agents'] });
+};
 
 export const useFetchAgents = (query = '') => {
   const { data: me } = useMe();
@@ -86,25 +155,42 @@ export const useUpdateAgentById = (agentId: string) => {
         throw new Error('Unauthenticated');
       }
 
-      queryClient.setQueryData(
-        ['agent', agentId],
-        () => updatedAgent,
-      );
-      queryClient.setQueryData(
-        ['agents', `creatorId=${me.id}`],
-        (oldCache?: Agent[]) => {
-          const old: Agent[] = oldCache || [];
-          const newAgents = [...old];
+      updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
+    },
+  });
+};
 
-          const at = newAgents.findIndex(agent => agent.id === updatedAgent.id);
-          if (at !== -1) {
-            newAgents.splice(at, 1);
-          }
-          newAgents.unshift(updatedAgent);
+export const useUpdateAgentAvatarById = (agentId: string) => {
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
 
-          return newAgents;
+  return useMutation({
+    mutationFn: async (file: File) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const dataUrl = await readFileAsDataUrl(file);
+      const { data: updatedAgentRaw } = await api.put<AgentRaw>(
+        `agents/${agentId}/avatar`,
+        {
+          contentType: file.type,
+          data: dataUrl,
         },
-      );
+      ).catch((error) => {
+        throw new Error(getApiErrorMessage(error, 'Failed to update avatar.'));
+      });
+      const updatedAgent = processRawAgent(updatedAgentRaw, { selfId: me.id });
+
+      return updatedAgent;
+    },
+
+    onSuccess: (updatedAgent) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
     },
   });
 };

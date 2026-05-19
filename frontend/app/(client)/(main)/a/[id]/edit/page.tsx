@@ -3,12 +3,17 @@
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
-import { useFetchAgentById, useUpdateAgentById, useDeleteAgentById } from '@/hooks/use-agents';
+import {
+  useFetchAgentById,
+  useUpdateAgentById,
+  useDeleteAgentById,
+  useUpdateAgentAvatarById,
+} from '@/hooks/use-agents';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
-import Error from 'next/error';
+import NextError from 'next/error';
 
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,7 +42,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getAgentAvatarUrl } from '@/lib/agent-avatar';
 
-import { LoaderCircle, X, Bot } from 'lucide-react';
+import { Camera, LoaderCircle, X, Bot } from 'lucide-react';
 
 const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
@@ -47,17 +52,84 @@ const formSchema = z.object({
   systemPrompt: z.string(),
 });
 
+const avatarOutputSize = 512;
+const acceptedAvatarTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Failed to read avatar image'));
+    image.src = src;
+  });
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Failed to read avatar image'));
+    reader.readAsDataURL(file);
+  });
+
+const createWebpAvatarFile = async (file: File) => {
+  if (!acceptedAvatarTypes.has(file.type)) {
+    throw new Error('Avatar must be a JPG, PNG, or WEBP image.');
+  }
+
+  const src = await readFileAsDataUrl(file);
+  const image = await loadImage(src);
+  const canvas = document.createElement('canvas');
+  canvas.width = avatarOutputSize;
+  canvas.height = avatarOutputSize;
+
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('Failed to prepare avatar image.');
+  }
+
+  const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
+  const sourceX = (image.naturalWidth - sourceSize) / 2;
+  const sourceY = (image.naturalHeight - sourceSize) / 2;
+
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceSize,
+    sourceSize,
+    0,
+    0,
+    avatarOutputSize,
+    avatarOutputSize,
+  );
+
+  const blob = await new Promise<Blob | null>(resolve =>
+    canvas.toBlob(resolve, 'image/webp', 0.9),
+  );
+
+  if (!blob) {
+    throw new Error('Failed to create avatar image.');
+  }
+
+  return new File([blob], 'avatar.webp', { type: 'image/webp' });
+};
+
 const EditAgentPage = () => {
   const params = useParams<{ id: string }>();
   const { id } = params;
 
   const { data: agent, error: fetchError, isPending: isFetchPending } = useFetchAgentById(id);
-  const { mutate: updateAgent, isPending: isUpdatePending } = useUpdateAgentById(id);
+  const updateAgentMutation = useUpdateAgentById(id);
+  const updateAvatarMutation = useUpdateAgentAvatarById(id);
   const { mutate: deleteAgent } = useDeleteAgentById(id);
 
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [originalValues, setOriginalValues] = useState<z.infer<typeof formSchema> | null>(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,7 +143,12 @@ const EditAgentPage = () => {
   });
 
   const currentValues = form.watch();
-  const hasChanges = originalValues && JSON.stringify(currentValues) !== JSON.stringify(originalValues);
+  const hasFormChanges = originalValues
+    ? JSON.stringify(currentValues) !== JSON.stringify(originalValues)
+    : false;
+  const hasAvatarChanges = !!selectedAvatarFile;
+  const hasChanges = hasFormChanges || hasAvatarChanges;
+  const isSavePending = updateAgentMutation.isPending || updateAvatarMutation.isPending;
   const { formState: { dirtyFields } } = form;
 
   useEffect(() => {
@@ -88,19 +165,79 @@ const EditAgentPage = () => {
     }
   }, [agent, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    updateAgent(values);
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
+
+  const clearSelectedAvatar = () => {
+    setSelectedAvatarFile(null);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+    setAvatarPreviewUrl(null);
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setSaveError(null);
+
+    try {
+      if (hasFormChanges) {
+        await updateAgentMutation.mutateAsync(values);
+      }
+
+      if (selectedAvatarFile) {
+        await updateAvatarMutation.mutateAsync(selectedAvatarFile);
+        clearSelectedAvatar();
+      }
+    }
+    catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Failed to save changes.');
+    }
   };
 
   const onRevert = () => {
     if (originalValues) {
       form.reset(originalValues);
     }
+    clearSelectedAvatar();
+    setSaveError(null);
+  };
+
+  const handleAvatarFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setSaveError(null);
+
+    try {
+      const avatarFile = await createWebpAvatarFile(file);
+      const previewUrl = URL.createObjectURL(avatarFile);
+
+      setSelectedAvatarFile(avatarFile);
+      setAvatarPreviewUrl((currentUrl) => {
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+        }
+
+        return previewUrl;
+      });
+    }
+    catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Failed to prepare avatar image.');
+    }
   };
 
   const handleVisibilityChange = () => {
     const newVisibility = agent?.visibility === 'private' ? 'public' : 'private';
-    updateAgent({
+    updateAgentMutation.mutate({
       visibility: newVisibility,
       name: agent?.name || '',
       description: agent?.description || '',
@@ -110,7 +247,7 @@ const EditAgentPage = () => {
   };
 
   if (agent && !agent.isOwn) {
-    return <Error statusCode={404} />;
+    return <NextError statusCode={404} />;
   }
 
   if (fetchError) {
@@ -153,12 +290,35 @@ const EditAgentPage = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <CardHeader className="flex">
-                <Avatar className="size-24 mr-4 sm:mr-8 rounded-full">
-                  <AvatarImage src={getAgentAvatarUrl(agent?.id)} alt={agent?.name} className="object-cover" />
-                  <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
-                    <Bot size="48" className="text-white" />
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative mr-4 sm:mr-8 size-24 shrink-0">
+                  <Avatar className="size-24 rounded-full">
+                    <AvatarImage src={avatarPreviewUrl || getAgentAvatarUrl(agent?.id, agent?.updatedAt)} alt={agent?.name} className="object-cover" />
+                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-600 to-purple-600 cursor-default">
+                      <Bot size="48" className="text-white" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    aria-label="Change avatar"
+                    type="button"
+                    size="icon"
+                    variant="secondary"
+                    disabled={isSavePending}
+                    className="absolute bottom-0 right-0 size-8 rounded-full border border-border shadow-sm"
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    {isSavePending
+                      ? <LoaderCircle className="animate-spin" />
+                      : <Camera />}
+                  </Button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={isSavePending}
+                    onChange={handleAvatarFileChange}
+                  />
+                </div>
                 <div className="">
                   <div className="text-2xl font-bold">
                     {agent?.name}
@@ -172,7 +332,7 @@ const EditAgentPage = () => {
                             private
                           </Badge>
                           <Button
-                            disabled={isUpdatePending || !!hasChanges}
+                            disabled={isSavePending || hasChanges}
                             type="button"
                             className="text-red-600 font-normal"
                             size="xxs"
@@ -191,7 +351,7 @@ const EditAgentPage = () => {
                             public
                           </Badge>
                           <Button
-                            disabled={isUpdatePending || !!hasChanges}
+                            disabled={isSavePending || hasChanges}
                             type="button"
                             className="text-red-600 font-normal"
                             size="xxs"
@@ -227,6 +387,12 @@ const EditAgentPage = () => {
 
               <CardContent>
                 <div className="items-center justify-center relative space-y-2">
+                  {saveError
+                    && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{saveError}</AlertDescription>
+                      </Alert>
+                    )}
                   <FormField
                     control={form.control}
                     name="name"
@@ -317,7 +483,7 @@ const EditAgentPage = () => {
                   <Button
                     variant="outline"
                     type="button"
-                    disabled={isUpdatePending}
+                    disabled={isSavePending}
                     className="w-30 text-red-500"
                     onClick={() => setShowDeleteDialog(true)}
                   >
@@ -329,7 +495,7 @@ const EditAgentPage = () => {
                     <Button
                       variant="secondary"
                       type="button"
-                      disabled={isUpdatePending || !hasChanges}
+                      disabled={isSavePending || !hasChanges}
                       className="w-30"
                       onClick={onRevert}
                     >
@@ -339,10 +505,10 @@ const EditAgentPage = () => {
                   <div>
                     <Button
                       type="submit"
-                      disabled={isUpdatePending || !hasChanges}
+                      disabled={isSavePending || !hasChanges}
                       className="w-30"
                     >
-                      {isUpdatePending ? 'Saving...' : 'Save Changes'}
+                      {isSavePending ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
                 </div>

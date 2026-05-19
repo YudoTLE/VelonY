@@ -1,6 +1,25 @@
 import { getContext } from '../lib/async-local-storage.js'
 
-export default function AgentService({ repo }) {
+const getMaxAvatarBytes = () =>
+  Number(process.env.AGENT_AVATAR_MAX_BYTES || 5 * 1024 * 1024)
+
+const stripDataUrlPrefix = (value) => {
+  const commaIndex = value.indexOf(',')
+  return value.startsWith('data:') && commaIndex !== -1
+    ? value.slice(commaIndex + 1)
+    : value
+}
+
+const hasExpectedImageSignature = (contentType, body) => {
+  if (contentType === 'image/webp') {
+    return body.subarray(0, 4).toString('ascii') === 'RIFF'
+      && body.subarray(8, 12).toString('ascii') === 'WEBP'
+  }
+
+  return false
+}
+
+export default function AgentService({ repo, avatarStorage }) {
   return {
     async list(query) {
       const { user } = getContext()
@@ -89,6 +108,70 @@ export default function AgentService({ repo }) {
         ...agent,
         isSubscribed: subscriptions.some(s => s.userId === user.sub),
         subscriberCount: willBePublic ? subscriptions.length : 0,
+      }
+
+      return enrichedAgent
+    },
+
+    async updateAvatar(agentId, payload) {
+      const { user } = getContext()
+      if (!user) throw { status: 401, message: 'Unauthenticated' }
+
+      const [existingAgent] = await repo.agent.select({ agentId })
+      if (!existingAgent) {
+        throw { status: 404, message: 'Agent not found' }
+      }
+      if (existingAgent.creatorId !== user.sub) {
+        throw { status: 403, message: 'Forbidden' }
+      }
+
+      const contentType = payload?.contentType
+      if (contentType !== 'image/webp') {
+        throw { status: 415, message: 'Avatar must be uploaded as a WEBP image' }
+      }
+
+      const base64Data = typeof payload?.data === 'string'
+        ? stripDataUrlPrefix(payload.data).replace(/\s/g, '')
+        : ''
+
+      if (!base64Data) {
+        throw { status: 400, message: 'Avatar image is required' }
+      }
+
+      const body = Buffer.from(base64Data, 'base64')
+      const maxAvatarBytes = getMaxAvatarBytes()
+      if (body.length === 0) {
+        throw { status: 400, message: 'Avatar image is empty' }
+      }
+      if (body.length > maxAvatarBytes) {
+        throw {
+          status: 413,
+          message: `Avatar image must be smaller than ${Math.floor(maxAvatarBytes / 1024 / 1024)}MB`,
+        }
+      }
+      if (!hasExpectedImageSignature(contentType, body)) {
+        throw { status: 415, message: 'Avatar image type does not match the uploaded file' }
+      }
+
+      await avatarStorage.putAgentAvatar({
+        agentId,
+        body,
+        contentType,
+      })
+
+      const [[agent], subscriptions] = await Promise.all([
+        repo.agent.update({ agentId, creatorId: user.sub }, { updatedAt: new Date() }),
+        repo.agentSubscription.select({ agentId }),
+      ])
+
+      if (!agent) {
+        throw { status: 404, message: 'Agent not found' }
+      }
+
+      const enrichedAgent = {
+        ...agent,
+        isSubscribed: subscriptions.some(s => s.userId === user.sub),
+        subscriberCount: agent.visibility === 'public' ? subscriptions.length : 0,
       }
 
       return enrichedAgent

@@ -43,6 +43,22 @@ export default function AgentController({ service, log }) {
       }
     },
 
+    async updateAvatar(request, reply) {
+      const { agentId } = request.params
+      const { contentType, data } = request.body || {}
+
+      try {
+        const updatedAgent = await service.updateAvatar(agentId, {
+          contentType,
+          data,
+        })
+        reply.code(200).send(updatedAgent)
+      } catch (err) {
+        log.error(err)
+        reply.code(err.status || 500).send({ error: err.message || 'Internal Server Error' })
+      }
+    },
+
     async create(request, reply) {
       const { name, description, showDetails, systemPrompt } = request.body
 

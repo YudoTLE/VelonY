@@ -55,6 +55,26 @@ Try it here: [https://velony.vercel.app](https://velony.vercel.app)
 - **Database:** Supabase
 - **Realtime:** Pusher or Socket.io
 - **Cache (session/auth):** Redis
+- **Agent avatars:** S3-compatible object storage
+
+## Agent Avatar Storage
+
+Agent avatar URLs are derived from each agent id, so no avatar URL column is needed. Configure the backend to write avatars to S3, and configure the frontend to read from the matching public base URL:
+
+```env
+# backend
+S3_BUCKET=your-bucket
+S3_REGION=ap-southeast-1
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+S3_AGENT_AVATAR_PREFIX=agents
+S3_AGENT_AVATAR_CACHE_CONTROL=public, max-age=300
+
+# frontend
+NEXT_PUBLIC_AGENT_AVATAR_BASE_URL=https://your-cdn-or-bucket.example.com/agents
+```
+
+For S3-compatible providers, set `S3_ENDPOINT`. Set `S3_FORCE_PATH_STYLE=true` if your provider requires path-style bucket URLs.
 
 ## Author
 
