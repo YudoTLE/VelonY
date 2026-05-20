@@ -30,7 +30,7 @@ export default function MessageService({ repo, realtime }) {
       const enrichedMessage = {
         ...message,
         senderName: userMap.get(message.senderId)?.name ?? null,
-        senderAvatar: userMap.get(message.senderId)?.avatarUrl ?? null,
+        senderAvatar: userMap.get(message.senderId)?.avatar ?? null,
         status: 'sent',
       }
 

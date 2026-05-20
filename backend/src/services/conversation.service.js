@@ -132,7 +132,7 @@ export default function ConversationService({ repo, realtime }) {
         return {
           ...m,
           senderName: sender?.name,
-          senderAvatar: sender?.avatarUrl,
+          senderAvatar: sender?.avatar,
           agentName: agent?.name,
           agentUpdatedAt: agent?.updatedAt,
           modelName: model?.name,
@@ -171,7 +171,7 @@ export default function ConversationService({ repo, realtime }) {
       const enrichedMessage = {
         ...message,
         senderName: userMap.get(message.senderId)?.name ?? null,
-        senderAvatar: userMap.get(message.senderId)?.avatarUrl ?? null,
+        senderAvatar: userMap.get(message.senderId)?.avatar ?? null,
         status: 'sent',
       }
     
