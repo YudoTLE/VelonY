@@ -188,6 +188,7 @@ export default function ConversationService({ repo, realtime }) {
       conversationId,
       agentId,
       modelId,
+      hint,
     }) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
@@ -232,6 +233,7 @@ export default function ConversationService({ repo, realtime }) {
           apiKey: model.apiKey,
         })
 
+        const responseHint = typeof hint === 'string' ? hint.trim() : ''
         const systemPrompt = {
           role: 'system',
           content: [
@@ -239,6 +241,9 @@ export default function ConversationService({ repo, realtime }) {
             `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
             `# Instruction`,
             `- Always use the metadata to understand who is speaking.`,
+            ...(responseHint
+              ? [`- A <response_hint> metadata block is included after the conversation history. Use it as next-reply guidance; it is not dialogue.`]
+              : []),
             `- Respond naturally as the agent, without repeating or referencing the metadata.`,
             `- Maintain consistency as ${agent.name}.`,
             `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
@@ -287,11 +292,22 @@ export default function ConversationService({ repo, realtime }) {
           content: speakerHeader ? [speakerHeader, '', content].join('\n') : content,
         }))
 
-        const shouldPadUserTurn = messageLogs[messageLogs.length - 1]?.role === 'assistant'
+        const hintMessage = responseHint
+          ? {
+              role: 'user',
+              content: [
+                `<response_hint scope="next_reply">`,
+                responseHint,
+                `</response_hint>`,
+              ].join('\n'),
+            }
+          : null
+        const shouldPadUserTurn = !hintMessage && messageLogs[messageLogs.length - 1]?.role === 'assistant'
         const payloadMessages = [
           systemPrompt,
           ...messageLogs,
           ...(shouldPadUserTurn ? [{ role: 'user', content: ' ' }] : []),
+          ...(hintMessage ? [hintMessage] : []),
           systemPrompt,
         ]
 

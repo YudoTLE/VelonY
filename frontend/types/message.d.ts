@@ -8,6 +8,7 @@ declare global {
     type: MessageType
     content: string
     extra: string
+    hint?: string
   };
 
   type MessageRaw = MessageData & {

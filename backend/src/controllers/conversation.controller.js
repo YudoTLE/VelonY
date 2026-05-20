@@ -51,7 +51,7 @@ export default function ConversationController({ service, log }) {
 
     async postMessage(request, reply) {
       const { conversationId } = request.params
-      const { type, content, extra, agentId, modelId, tempId } = request.body
+      const { type, content, extra, agentId, modelId, tempId, hint } = request.body
 
       try {
         if (type === 'user') {
@@ -72,6 +72,7 @@ export default function ConversationController({ service, log }) {
             conversationId,
             agentId,
             modelId,
+            hint,
           })
           reply.code(201).send(data)
         } 

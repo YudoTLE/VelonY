@@ -12,6 +12,7 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import { TextareaAutosize } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,6 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from '@/components/ui/popover';
 
 import { ArrowUp, Bot, Cpu, Sparkles } from 'lucide-react';
 
@@ -45,6 +51,8 @@ export const MessageInput = ({
 
   const [usedAgent, setUsedAgent] = useState<string | null>(null);
   const [usedModel, setUsedModel] = useState<string | null>(null);
+  const [agentHint, setAgentHint] = useState('');
+  const [isHintOpen, setIsHintOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
@@ -61,6 +69,8 @@ export const MessageInput = ({
   const [triggerBotCuePlaying, setTriggerBotCuePlaying] = useState(false);
   const [triggerBotUseCount, setTriggerBotUseCount] = useState(0);
   const triggerBotTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hintPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const suppressNextGenerateRef = useRef(false);
 
   const resetTriggerBotCueTimer = () => {
     setTriggerBotCuePlaying(false);
@@ -80,6 +90,9 @@ export const MessageInput = ({
     return () => {
       if (triggerBotTimerRef.current) {
         clearTimeout(triggerBotTimerRef.current);
+      }
+      if (hintPressTimerRef.current) {
+        clearTimeout(hintPressTimerRef.current);
       }
     };
   }, []);
@@ -122,25 +135,55 @@ export const MessageInput = ({
     resetTriggerBotCueTimer();
     setTriggerBotUseCount(triggerBotUseCount + 1);
 
+    const hint = agentHint.trim();
+    const payload: MessageData = {
+      type: 'agent',
+      content: `agent ${usedAgent}`,
+      extra: '',
+      agentId: usedAgent,
+      modelId: usedModel,
+      hint: hint || undefined,
+    };
+
     if (conversationId) {
-      sendMessage1({
-        type: 'agent',
-        content: `agent ${usedAgent}`,
-        extra: '',
-        agentId: usedAgent,
-        modelId: usedModel,
-      });
+      sendMessage1(payload);
     }
     else {
-      sendMessage2({
-        type: 'agent',
-        content: `agent ${usedAgent}`,
-        extra: '',
-        agentId: usedAgent,
-        modelId: usedModel,
-      });
+      sendMessage2(payload);
       setEnabled(false);
     }
+    setAgentHint('');
+    setIsHintOpen(false);
+  };
+  const clearHintPressTimer = () => {
+    if (hintPressTimerRef.current) {
+      clearTimeout(hintPressTimerRef.current);
+      hintPressTimerRef.current = null;
+    }
+  };
+  const handleSparklesClick = () => {
+    if (suppressNextGenerateRef.current) {
+      suppressNextGenerateRef.current = false;
+      return;
+    }
+
+    handleTriggerBot();
+  };
+  const handleSparklesPressStart = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+
+    clearHintPressTimer();
+    hintPressTimerRef.current = setTimeout(() => {
+      suppressNextGenerateRef.current = true;
+      setIsHintOpen(true);
+    }, 450);
+  };
+  const handleSparklesPressEnd = () => {
+    clearHintPressTimer();
+  };
+  const handleSparklesContextMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setIsHintOpen(true);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -182,26 +225,68 @@ export const MessageInput = ({
 
         <CardFooter className="gap-3">
 
-          <Button
-            type="button"
-            onClick={handleTriggerBot}
-            variant="outline"
-            className={cn(
-              'border-1 bg-transparent opacity-0 size-9 transition-opacity duration-300 group relative',
-              !isFetchAgentPending && !isFetchModelPending && 'opacity-100',
-            )}
-          >
-            <Sparkles className="absolute" />
-            <div className={cn(
-              'absolute inset-0 opacity-0 rounded-full bg-white/10',
-              triggerBotCuePlaying && 'opacity-100 animate-ping',
-            )}
-            />
-            <Sparkles className={cn('text-blue-300', triggerBotCuePlaying && 'animate-pulse')} />
-          </Button>
+          <Popover open={isHintOpen} onOpenChange={setIsHintOpen}>
+            <PopoverAnchor asChild>
+              <Button
+                type="button"
+                onClick={handleSparklesClick}
+                onPointerDown={handleSparklesPressStart}
+                onPointerUp={handleSparklesPressEnd}
+                onPointerLeave={handleSparklesPressEnd}
+                onContextMenu={handleSparklesContextMenu}
+                variant="outline"
+                aria-label="Generate agent response. Press and hold for hint options."
+                title="Click to generate. Hold for hint."
+                className={cn(
+                  'border-1 bg-transparent opacity-0 size-9 transition-opacity duration-300 group relative',
+                  !isFetchAgentPending && !isFetchModelPending && 'opacity-100',
+                  agentHint.trim() && 'bg-muted text-primary',
+                )}
+              >
+                <Sparkles className="absolute" />
+                <div className={cn(
+                  'absolute inset-0 opacity-0 rounded-full bg-white/10',
+                  triggerBotCuePlaying && 'opacity-100 animate-ping',
+                )}
+                />
+                <Sparkles className={cn('text-blue-300', triggerBotCuePlaying && 'animate-pulse')} />
+              </Button>
+            </PopoverAnchor>
+            <PopoverContent
+              side="top"
+              align="start"
+              className="w-[min(calc(100vw-2rem),19rem)] p-2.5"
+            >
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+                Response hint
+              </div>
+              <TextareaAutosize
+                disabled={!enabled}
+                minRows={1}
+                maxRows={4}
+                value={agentHint}
+                placeholder="Add a hint..."
+                onChange={event => setAgentHint(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleTriggerBot();
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setIsHintOpen(false);
+                  }
+                }}
+                className={cn(
+                  'min-h-9 w-full resize-none rounded-md border border-border bg-secondary/35 px-2.5 py-2 text-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/25',
+                  !enabled && 'opacity-50',
+                )}
+              />
+            </PopoverContent>
+          </Popover>
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
             <SelectTrigger className={cn(
-              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300 group',
+              'w-11 sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300 group',
               !isFetchAgentPending && 'opacity-100',
             )}
             >
@@ -225,7 +310,7 @@ export const MessageInput = ({
           </Select>
           <Select value={usedModel ?? ''} onValueChange={setUsedModel}>
             <SelectTrigger className={cn(
-              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300',
+              'w-11 sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300',
               !isFetchModelPending && 'opacity-100',
             )}
             >
