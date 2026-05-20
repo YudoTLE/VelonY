@@ -238,7 +238,8 @@ export default function ConversationService({ repo, realtime }) {
             `# Identity`,
             `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
             `# Instruction`,
-            `- Always use the metadata to understand who is speaking.`,
+            `- Always use the speaker metadata to understand who is speaking.`,
+            `- Other participants are identified only as speakers; their participant type is intentionally not provided.`,
             `- Respond naturally as the agent, without repeating or referencing the metadata.`,
             `- Maintain consistency as ${agent.name}.`,
             `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
@@ -254,7 +255,7 @@ export default function ConversationService({ repo, realtime }) {
               return {
                 role: 'user',
                 content: [
-                  `[sender: (${messageSender?.id}) ${messageSender?.name}]`,
+                  `[speaker: (${messageSender?.id ?? 'unknown'}) ${messageSender?.name ?? 'Unknown'}]`,
                   '',
                   message.content,
                 ].join('\n'),
@@ -263,7 +264,7 @@ export default function ConversationService({ repo, realtime }) {
               return {
                 role: messageAgent?.id === agentId ? 'assistant' : 'user',
                 content: messageAgent?.id === agentId ? message.content : [
-                  `[agent: (${messageAgent?.id}) ${messageAgent?.name}]`,
+                  `[speaker: (${messageAgent?.id ?? 'unknown'}) ${messageAgent?.name ?? 'Unknown'}]`,
                   '',
                   message.content,
                 ].join('\n'),
