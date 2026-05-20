@@ -246,7 +246,7 @@ export default function ConversationService({ repo, realtime }) {
             agent.systemPrompt,
           ].join('\n'),
         }
-        const messageLogs = messages.map((message) => {
+        const messageLogsUnmerged = messages.map((message) => {
           const messageSender = userMap.get(message.senderId)
           const messageAgent = agentMap.get(message.agentId)
 
@@ -254,25 +254,39 @@ export default function ConversationService({ repo, realtime }) {
             case 'user':
               return {
                 role: 'user',
-                content: [
-                  `[speaker: (${messageSender?.id ?? 'unknown'}) ${messageSender?.name ?? 'Unknown'}]`,
-                  '',
-                  message.content,
-                ].join('\n'),
+                speakerHeader: `[speaker: (${messageSender?.id ?? 'unknown'}) ${messageSender?.name ?? 'Unknown'}]`,
+                speakerKey: `speaker:${messageSender?.id ?? 'unknown'}`,
+                content: message.content,
               }
             case 'agent':
               return {
                 role: messageAgent?.id === agentId ? 'assistant' : 'user',
-                content: messageAgent?.id === agentId ? message.content : [
-                  `[speaker: (${messageAgent?.id ?? 'unknown'}) ${messageAgent?.name ?? 'Unknown'}]`,
-                  '',
-                  message.content,
-                ].join('\n'),
+                speakerHeader: messageAgent?.id === agentId
+                  ? null
+                  : `[speaker: (${messageAgent?.id ?? 'unknown'}) ${messageAgent?.name ?? 'Unknown'}]`,
+                speakerKey: messageAgent?.id === agentId
+                  ? `self:${agentId}`
+                  : `speaker:${messageAgent?.id ?? 'unknown'}`,
+                content: message.content,
               }
             default:
               return null;
           }
         }).filter(Boolean)
+
+        const messageLogs = messageLogsUnmerged.reduce((acc, message) => {
+          const prev = acc[acc.length - 1]
+          if (prev && prev.role === message.role && prev.speakerKey === message.speakerKey) {
+            prev.content = [prev.content, message.content].join('\n\n')
+            return acc
+          }
+
+          acc.push({ ...message })
+          return acc
+        }, []).map(({ speakerKey, speakerHeader, content, ...message }) => ({
+          ...message,
+          content: speakerHeader ? [speakerHeader, '', content].join('\n') : content,
+        }))
 
         const payload = {
           model: model.llm,
