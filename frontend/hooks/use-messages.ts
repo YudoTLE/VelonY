@@ -23,6 +23,11 @@ type MessageChunkState = {
   pending: Map<number, MessageChunkPayload>;
 };
 
+type UpdateMessagePayload = {
+  messageId: Message['id'];
+  content: Message['content'];
+};
+
 export const useFetchMessages = (conversationId: string) => {
   const { data: me } = useMe();
 
@@ -209,6 +214,77 @@ export const useDeleteMessage = (conversationId: string) => {
           const at = newMessages.findIndex(message => message.id === messageId);
           if (at !== -1) {
             newMessages[at].status = 'deleting';
+          }
+
+          return newMessages;
+        },
+      );
+    },
+  });
+};
+
+export const useUpdateMessage = (conversationId: string) => {
+  const queryClient = useQueryClient();
+  const { data: me } = useMe();
+
+  return useMutation({
+    mutationFn: async ({ messageId, content }: UpdateMessagePayload) => {
+      if (!me) {
+        throw new Error('Unauthenticated');
+      }
+
+      const { data: updatedMessageRaw } = await api.patch<MessageRaw>(`/messages/${messageId}`, { content });
+      const updatedMessage = processRawMessage(updatedMessageRaw, { selfId: me.id });
+
+      return updatedMessage;
+    },
+
+    onMutate: async ({ messageId, content }) => {
+      await queryClient.cancelQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+
+      const prevCache = queryClient.getQueryData<Message[]>(['conversations', conversationId, 'messages']);
+
+      queryClient.setQueryData(
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old];
+
+          const at = newMessages.findIndex(message => message.id === messageId);
+          if (at !== -1) {
+            newMessages[at] = {
+              ...newMessages[at],
+              content,
+              updatedAt: new Date(),
+            };
+          }
+
+          return newMessages;
+        },
+      );
+
+      return { prevCache };
+    },
+
+    onError: (err, variables, context) => {
+      if (context?.prevCache) {
+        queryClient.setQueryData(['conversations', conversationId, 'messages'], context.prevCache);
+      }
+    },
+
+    onSuccess: (updatedMessage) => {
+      queryClient.setQueryData(
+        ['conversations', conversationId, 'messages'],
+        (oldCache?: Message[]) => {
+          const old: Message[] = oldCache ?? [];
+          const newMessages = [...old];
+
+          const at = newMessages.findIndex(message => message.id === updatedMessage.id);
+          if (at === -1) {
+            newMessages.push(updatedMessage);
+          }
+          else {
+            newMessages[at] = updatedMessage;
           }
 
           return newMessages;

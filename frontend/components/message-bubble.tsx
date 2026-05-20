@@ -1,4 +1,4 @@
-import { useDeleteMessage } from '@/hooks/use-messages';
+import { useDeleteMessage, useUpdateMessage } from '@/hooks/use-messages';
 
 import { Player } from '@lottiefiles/react-lottie-player';
 import React, { useState } from 'react';
@@ -8,6 +8,7 @@ import CodeBlock from '@/components/code-block';
 import MermaidChart from '@/components/mermaid-chart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { TextareaAutosize } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,12 +43,44 @@ const MessageBubbleComponent = (
   { prevMessage, nextMessage, message }: { prevMessage?: Message, nextMessage?: Message, message: Message },
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId);
+  const { mutateAsync: updateMutation, isPending: isUpdating } = useUpdateMessage(message.conversationId);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftContent, setDraftContent] = useState(message.content);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
   };
   const handleDelete = () => {
     deleteMutation(message.id);
+  };
+  const handleStartEdit = () => {
+    if (!message.isOwn || message.status !== 'sent') return;
+
+    setDraftContent(message.content);
+    setEditError(null);
+    setIsEditing(true);
+  };
+  const handleCancelEdit = () => {
+    setDraftContent(message.content);
+    setEditError(null);
+    setIsEditing(false);
+  };
+  const handleSaveEdit = async () => {
+    const nextContent = draftContent.trim();
+    if (!nextContent) {
+      setEditError('Message cannot be empty');
+      return;
+    }
+
+    try {
+      await updateMutation({ messageId: message.id, content: nextContent });
+      setEditError(null);
+      setIsEditing(false);
+    }
+    catch {
+      setEditError('Failed to update message');
+    }
   };
 
   const isSameSenderAsPrev = (!!message.senderId && message.senderId === prevMessage?.senderId) || (message.isOwn && (message.isOwn === prevMessage?.isOwn));
@@ -87,23 +120,77 @@ const MessageBubbleComponent = (
           )}
 
         <Card className={cn(
-          'row-start-2 max-w-3xl pt-1 pb-0.5 rounded-2xl border-none',
-          message.isOwn ? 'col-start-2 bg-primary rounded-tr-xs' : 'col-start-1 bg-secondary rounded-tl-xs',
-          mergeWithNext
+          'row-start-2 max-w-3xl rounded-2xl',
+          isEditing
+            ? 'col-start-2 border-none bg-primary py-2 shadow-sm rounded-tr-xs'
+            : 'border-none pt-1 pb-0.5',
+          !isEditing && (message.isOwn ? 'col-start-2 bg-primary rounded-tr-xs' : 'col-start-1 bg-secondary rounded-tl-xs'),
+          isEditing && mergeWithNext && 'rounded-br-xs',
+          !isEditing && mergeWithNext
           && (message.isOwn ? 'bg-primary rounded-br-xs' : 'bg-secondary rounded-bl-xs'),
         )}
         >
-          <CardContent className="px-3 flex flex-col">
-            <div className="overflow-hidden max-w-none">
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
-                  // pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
-            </div>
+          <CardContent className={cn('flex flex-col', isEditing ? 'px-2.5' : 'px-3')}>
+            {isEditing
+              ? (
+                  <div className="min-w-60 sm:min-w-80">
+                    <TextareaAutosize
+                      autoFocus
+                      value={draftContent}
+                      onChange={event => setDraftContent(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          handleCancelEdit();
+                        }
+                        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                          event.preventDefault();
+                          handleSaveEdit();
+                        }
+                      }}
+                      minRows={1}
+                      maxRows={8}
+                      disabled={isUpdating}
+                      className="min-h-10 border-primary-foreground/10 bg-black/15 px-2.5 py-2 text-sm text-primary-foreground shadow-none focus-visible:border-primary-foreground/25 focus-visible:ring-primary-foreground/20"
+                    />
+                    {editError
+                      && <p className="mt-1 px-1 text-xs text-primary-foreground/85">{editError}</p>}
+                    <div className="mt-1.5 flex justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={handleCancelEdit}
+                        disabled={isUpdating}
+                        className="min-w-16 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/20"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={handleSaveEdit}
+                        disabled={isUpdating}
+                        className="min-w-16 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/20"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                )
+              : (
+                  <div className="overflow-hidden max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
+                        // pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
             {message.isOwn
               ? (
                   <span className="ml-auto flex items-center gap-1">
@@ -146,12 +233,15 @@ const MessageBubbleComponent = (
                   <Copy />
                 </DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleCopy}>
-                Edit
-                <DropdownMenuShortcut>
-                  <Pencil />
-                </DropdownMenuShortcut>
-              </DropdownMenuItem>
+              {message.isOwn && message.status === 'sent'
+                && (
+                  <DropdownMenuItem onClick={handleStartEdit} disabled={isEditing}>
+                    Edit
+                    <DropdownMenuShortcut>
+                      <Pencil />
+                    </DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDelete} variant="destructive">
                 Delete
