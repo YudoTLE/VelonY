@@ -44,7 +44,6 @@ import {
   Bot,
   MessageSquare,
   Cpu,
-  Settings,
   SquarePlus,
   Search,
   Hammer,
@@ -72,7 +71,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <TabsTrigger className="cursor-pointer" value="conversations"><MessageSquare /></TabsTrigger>
             <TabsTrigger className="cursor-pointer" value="agents"><Bot /></TabsTrigger>
             <TabsTrigger className="cursor-pointer" value="models"><Cpu /></TabsTrigger>
-            <TabsTrigger className="cursor-pointer" value="settings"><Settings /></TabsTrigger>
           </TabsList>
         </SidebarHeader>
         <SidebarContent>
@@ -169,13 +167,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <NavDefaultModels />
                 <NavSubscribedModels />
                 <NavMyModels />
-              </SidebarMenu>
-            </SidebarGroup>
-          </TabsContent>
-          <TabsContent value="settings">
-            <SidebarGroup>
-              <SidebarGroupLabel className="my-0">Settings</SidebarGroupLabel>
-              <SidebarMenu>
               </SidebarMenu>
             </SidebarGroup>
           </TabsContent>
