@@ -3,7 +3,10 @@ export default function AuthController({ service, jwt, log }) {
     async handleGoogleCallback(request, reply) {
       try {
         const { id: userId } = await service.processGoogleOAuth(request)
-        const appToken = jwt.sign({ sub: userId }, { expiresIn: '1d' })
+        const appToken = jwt.sign(
+          { sub: userId },
+          { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+        )
         return reply.redirect(`${process.env.FRONTEND_URL}/loggedin?token=${appToken}`)
       } catch (err) {
         log.error(err)

@@ -76,6 +76,18 @@ NEXT_PUBLIC_AGENT_AVATAR_BASE_URL=https://your-cdn-or-bucket.example.com/agents
 
 For S3-compatible providers, set `S3_ENDPOINT`. Set `S3_FORCE_PATH_STYLE=true` if your provider requires path-style bucket URLs.
 
+## Auth Session Lifetime
+
+The backend JWT expiry and frontend cookie lifetime are configurable. Keep them matched unless you intentionally want a different browser storage lifetime.
+
+```env
+# backend
+JWT_EXPIRES_IN=1d
+
+# frontend
+NEXT_PUBLIC_AUTH_COOKIE_MAX_AGE_DAYS=1
+```
+
 ## Author
 
 Made with sweat and blood by **Yudo**

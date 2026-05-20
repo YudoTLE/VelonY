@@ -8,6 +8,12 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+const getAuthCookieMaxAgeMs = () => {
+  const maxAgeDays = Number(process.env.NEXT_PUBLIC_AUTH_COOKIE_MAX_AGE_DAYS || 1);
+
+  return maxAgeDays * 24 * 60 * 60 * 1000;
+};
+
 export default function LoggedInPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -21,7 +27,7 @@ export default function LoggedInPage() {
       cookies.set('token', token, {
         path: '/',
         sameSite: 'lax',
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        expires: new Date(Date.now() + getAuthCookieMaxAgeMs()),
       });
 
       // Update cached user data
