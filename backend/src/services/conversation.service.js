@@ -287,15 +287,19 @@ export default function ConversationService({ repo, realtime }) {
           content: speakerHeader ? [speakerHeader, '', content].join('\n') : content,
         }))
 
+        const shouldPadUserTurn = messageLogs[messageLogs.length - 1]?.role === 'assistant'
+        const payloadMessages = [
+          systemPrompt,
+          ...messageLogs,
+          ...(shouldPadUserTurn ? [{ role: 'user', content: ' ' }] : []),
+          systemPrompt,
+        ]
+
         const payload = {
           model: model.llm,
           stream: true,
           ...modelConfig,
-          messages: [
-            systemPrompt,
-            ...messageLogs,
-            systemPrompt,
-          ],
+          messages: payloadMessages,
         }
 
         const stream = await openai.chat.completions.create(payload)
