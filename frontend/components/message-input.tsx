@@ -286,7 +286,7 @@ export const MessageInput = ({
           </Popover>
           <Select value={usedAgent ?? ''} onValueChange={setUsedAgent}>
             <SelectTrigger className={cn(
-              'w-11 sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300 group',
+              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300 group',
               !isFetchAgentPending && 'opacity-100',
             )}
             >
@@ -310,7 +310,7 @@ export const MessageInput = ({
           </Select>
           <Select value={usedModel ?? ''} onValueChange={setUsedModel}>
             <SelectTrigger className={cn(
-              'w-11 sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300',
+              'sm:w-[150px] cursor-pointer hover:bg-muted opacity-0 transition-opacity duration-300',
               !isFetchModelPending && 'opacity-100',
             )}
             >
