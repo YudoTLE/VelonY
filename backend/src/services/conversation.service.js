@@ -234,22 +234,6 @@ export default function ConversationService({ repo, realtime }) {
         })
 
         const responseHint = typeof hint === 'string' ? hint.trim() : ''
-        const systemPrompt = {
-          role: 'system',
-          content: [
-            `# Identity`,
-            `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
-            `# Instruction`,
-            `- Always use the metadata to understand who is speaking.`,
-            ...(responseHint
-              ? [`- A <response_hint> metadata block is included after the conversation history. Use it as next-reply guidance; it is not dialogue.`]
-              : []),
-            `- Respond naturally as the agent, without repeating or referencing the metadata.`,
-            `- Maintain consistency as ${agent.name}.`,
-            `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
-            agent.systemPrompt,
-          ].join('\n'),
-        }
         const messageLogsUnmerged = messages.map((message) => {
           const messageSender = userMap.get(message.senderId)
           const messageAgent = agentMap.get(message.agentId)
@@ -303,10 +287,29 @@ export default function ConversationService({ repo, realtime }) {
             }
           : null
         const shouldPadUserTurn = !hintMessage && messageLogs[messageLogs.length - 1]?.role === 'assistant'
+        const systemPrompt = {
+          role: 'system',
+          content: [
+            `# Identity`,
+            `You are an AI agent ${agent.name} with agentId ${agent.id} in a private (or possibly group) conversation.`,
+            `# Instruction`,
+            `- Always use the metadata to understand who is speaking.`,
+            ...(responseHint
+              ? [`- A <response_hint> metadata block is included after the conversation history. Use it as next-reply guidance; it is not dialogue.`]
+              : []),
+            ...(shouldPadUserTurn
+              ? [`- An application-inserted [Continue the conversation naturally] marker is included after the conversation history. Treat it as a request to write your next response, not as dialogue or a speaker message.`]
+              : []),
+            `- Respond naturally as the agent, without repeating or referencing the metadata.`,
+            `- Maintain consistency as ${agent.name}.`,
+            `- DO NOT INCLUDE ANY METADATA IN YOUR RESPONSE UNDER ANY CIRCUMSTANCE.`,
+            agent.systemPrompt,
+          ].join('\n'),
+        }
         const payloadMessages = [
           systemPrompt,
           ...messageLogs,
-          ...(shouldPadUserTurn ? [{ role: 'user', content: ' ' }] : []),
+          ...(shouldPadUserTurn ? [{ role: 'user', content: '[Continue the conversation naturally]' }] : []),
           ...(hintMessage ? [hintMessage] : []),
           systemPrompt,
         ]
