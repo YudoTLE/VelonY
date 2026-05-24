@@ -12,20 +12,20 @@ import { getPusherChannel } from '@/lib/pusher';
 import api from '@/lib/axios';
 
 type MessageChunkPayload = {
-  messageId: Message['id'];
-  chunkIndex?: number;
-  deltaContent: Message['content'];
-  deltaExtra: Message['extra'];
+  messageId: Message['id']
+  chunkIndex?: number
+  deltaContent: Message['content']
+  deltaExtra: Message['extra']
 };
 
 type MessageChunkState = {
-  nextIndex: number;
-  pending: Map<number, MessageChunkPayload>;
+  nextIndex: number
+  pending: Map<number, MessageChunkPayload>
 };
 
 type UpdateMessagePayload = {
-  messageId: Message['id'];
-  content: Message['content'];
+  messageId: Message['id']
+  content: Message['content']
 };
 
 export const useFetchMessages = (conversationId: string) => {
