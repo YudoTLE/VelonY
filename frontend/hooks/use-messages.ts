@@ -66,6 +66,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
       senderName: 'You',
       senderAvatar: '',
       agentName: '',
+      agentInteractionMode: 'assistant',
       modelName: '',
       status: 'sending',
       isOwn: true,
@@ -117,7 +118,7 @@ export const useSendMessageByConversation = (conversationId: string) => {
     },
 
     onSuccess: (newMessage, variables, context) => {
-      const tempId = newMessage.type === 'user' ? context.newMessageTemp.id : newMessage.id;
+      const tempId = context?.newMessageTemp.id ?? newMessage.id;
 
       queryClient.setQueryData(
         ['conversations', conversationId, 'messages'],

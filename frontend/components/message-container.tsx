@@ -118,8 +118,9 @@ export const MessageContainer = ({
               const message = messages[index];
               const prevMessage = messages[index - 1] || null;
               const nextMessage = messages[index + 1] || null;
-
-              if (message.type === 'user') {
+              const rendersAsThreadMessage = message.type === 'user'
+                || (message.type === 'agent' && message.agentInteractionMode === 'participant');
+              if (rendersAsThreadMessage) {
                 return (
                   <div
                     key={key}
