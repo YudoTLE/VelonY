@@ -26,11 +26,12 @@ export default function AgentController({ service, log }) {
 
     async update(request, reply) {
       const { agentId } = request.params
-      const { visibility, name, description, showDetails, systemPrompt } = request.body
+      const { visibility, interactionMode, name, description, showDetails, systemPrompt } = request.body
 
       try {
         const data = await service.update(agentId, {
           visibility,
+          interactionMode,
           name,
           description,
           showDetails,
@@ -60,10 +61,11 @@ export default function AgentController({ service, log }) {
     },
 
     async create(request, reply) {
-      const { name, description, showDetails, systemPrompt } = request.body
+      const { interactionMode, name, description, showDetails, systemPrompt } = request.body
 
       try {
         const data = await service.create({
+          interactionMode,
           name,
           description,
           showDetails,
