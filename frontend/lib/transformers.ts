@@ -1,3 +1,6 @@
+import { getAgentAvatarUrl } from '@/lib/agent-avatar';
+import { parseAgentInteractionMode } from '@/lib/agent-interaction-mode';
+
 export const processRawUser = (
   raw: UserRaw,
 ): User => {
@@ -20,10 +23,13 @@ export const processRawMessage = (
     selfId: string
   },
 ): Message => {
-  const isOwn = !!config.selfId && config.selfId === raw.senderId;
-  const senderName = isOwn ? 'You' : raw.senderName || '<VelonY User>';
-  const senderAvatar = raw.senderAvatar || '';
   const agentName = raw.agentName || '<VelonY Agent>';
+  const agentInteractionMode = parseAgentInteractionMode(raw.agentInteractionMode);
+  const agentUpdatedAt = raw.agentUpdatedAt ? new Date(raw.agentUpdatedAt) : undefined;
+  const isOwn = raw.type === 'user' && !!config.selfId && config.selfId === raw.senderId;
+  const usesAgentSpeaker = raw.type === 'agent' && agentInteractionMode === 'participant';
+  const senderName = usesAgentSpeaker ? agentName : isOwn ? 'You' : raw.senderName || '<VelonY User>';
+  const senderAvatar = usesAgentSpeaker ? getAgentAvatarUrl(raw.agentId, agentUpdatedAt) : raw.senderAvatar || '';
   const modelName = raw.modelName || '<VelonY Model>';
   const initial = (raw.type === 'user' ? senderName : agentName)
     .trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
@@ -33,12 +39,13 @@ export const processRawMessage = (
     senderName,
     senderAvatar,
     agentName,
+    agentInteractionMode,
     modelName,
     isOwn,
     initial,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
-    agentUpdatedAt: raw.agentUpdatedAt ? new Date(raw.agentUpdatedAt) : undefined,
+    agentUpdatedAt,
   };
 };
 
@@ -88,6 +95,7 @@ export const processRawAgent = (
 
   return {
     ...raw,
+    interactionMode: parseAgentInteractionMode(raw.interactionMode),
     subscriberCount,
     isOwn,
     isEditable,

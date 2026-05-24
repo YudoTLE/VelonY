@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getAgentAvatarUrl } from '@/lib/agent-avatar';
+import { parseAgentInteractionMode } from '@/lib/agent-interaction-mode';
 
 import {
   Bot,
@@ -23,6 +24,9 @@ const ViewAgentPage = () => {
 
   const { data: agent, error: fetchError, isPending: isFetchPending } = useFetchAgentById(id);
   const { mutate, isPending: isTogglePending } = useToggleAgentSubscriptionById(id);
+  const interactionModeLabel = parseAgentInteractionMode(agent?.interactionMode) === 'participant'
+    ? 'Participant'
+    : 'Assistant';
 
   if (fetchError) {
     return (
@@ -157,6 +161,10 @@ const ViewAgentPage = () => {
               <ReactMarkdown>
                 {agent?.description}
               </ReactMarkdown>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Mode: </div>
+              {interactionModeLabel}
             </div>
             {agent?.showDetails
               && (

@@ -28,6 +28,13 @@ import {
 } from '@/components/ui/form';
 import { TextareaAutosize } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -41,16 +48,42 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getAgentAvatarUrl } from '@/lib/agent-avatar';
+import { parseAgentInteractionMode } from '@/lib/agent-interaction-mode';
 
 import { Camera, LoaderCircle, X, Bot } from 'lucide-react';
 
 const formSchema = z.object({
   visibility: z.enum(['private', 'public', 'default']),
+  interactionMode: z.enum(['assistant', 'participant']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   showDetails: z.boolean(),
   description: z.string(),
   systemPrompt: z.string(),
 });
+
+type AgentFormValues = z.infer<typeof formSchema>;
+
+const normalizeAgentFormValues = (
+  values: Partial<AgentFormValues>,
+  fallback?: AgentFormValues | null,
+): AgentFormValues => ({
+  visibility: values.visibility ?? fallback?.visibility ?? 'private',
+  interactionMode: parseAgentInteractionMode(values.interactionMode, fallback?.interactionMode),
+  name: values.name ?? fallback?.name ?? '',
+  description: values.description ?? fallback?.description ?? '',
+  showDetails: values.showDetails ?? fallback?.showDetails ?? false,
+  systemPrompt: values.systemPrompt ?? fallback?.systemPrompt ?? '',
+});
+
+const getAgentFormValues = (agent: Agent): AgentFormValues =>
+  normalizeAgentFormValues({
+    visibility: agent.visibility,
+    interactionMode: agent.interactionMode,
+    name: agent.name,
+    description: agent.description,
+    showDetails: agent.showDetails,
+    systemPrompt: agent.systemPrompt || '',
+  });
 
 const avatarOutputSize = 512;
 const acceptedAvatarTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -126,44 +159,41 @@ const EditAgentPage = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [originalValues, setOriginalValues] = useState<z.infer<typeof formSchema> | null>(null);
+  const [originalValues, setOriginalValues] = useState<AgentFormValues | null>(null);
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<AgentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       visibility: 'private',
+      interactionMode: 'assistant',
       name: '',
       description: '',
       showDetails: false,
       systemPrompt: '',
     },
   });
+  const { reset } = form;
 
-  const currentValues = form.watch();
+  const currentValues = normalizeAgentFormValues(form.watch(), originalValues);
   const hasFormChanges = originalValues
     ? JSON.stringify(currentValues) !== JSON.stringify(originalValues)
     : false;
   const hasAvatarChanges = !!selectedAvatarFile;
   const hasChanges = hasFormChanges || hasAvatarChanges;
   const isSavePending = updateAgentMutation.isPending || updateAvatarMutation.isPending;
-  const { formState: { dirtyFields } } = form;
+  const isFieldDirty = (field: keyof AgentFormValues) =>
+    originalValues ? currentValues[field] !== originalValues[field] : false;
 
   useEffect(() => {
     if (agent) {
-      const values = {
-        visibility: agent.visibility || 'private',
-        name: agent.name || '',
-        description: agent.description || '',
-        showDetails: agent.showDetails,
-        systemPrompt: agent.systemPrompt || '',
-      };
-      form.reset(values);
+      const values = getAgentFormValues(agent);
+      reset(values);
       setOriginalValues(values);
     }
-  }, [agent, form]);
+  }, [agent, reset]);
 
   useEffect(() => {
     return () => {
@@ -181,17 +211,26 @@ const EditAgentPage = () => {
     setAvatarPreviewUrl(null);
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: AgentFormValues) => {
     setSaveError(null);
 
     try {
+      const normalizedValues = normalizeAgentFormValues(values, originalValues);
+      let savedAgent: Agent | null = null;
+
       if (hasFormChanges) {
-        await updateAgentMutation.mutateAsync(values);
+        savedAgent = await updateAgentMutation.mutateAsync(normalizedValues);
       }
 
       if (selectedAvatarFile) {
-        await updateAvatarMutation.mutateAsync(selectedAvatarFile);
+        savedAgent = await updateAvatarMutation.mutateAsync(selectedAvatarFile);
         clearSelectedAvatar();
+      }
+
+      if (savedAgent) {
+        const savedValues = getAgentFormValues(savedAgent);
+        reset(savedValues);
+        setOriginalValues(savedValues);
       }
     }
     catch (error) {
@@ -201,7 +240,7 @@ const EditAgentPage = () => {
 
   const onRevert = () => {
     if (originalValues) {
-      form.reset(originalValues);
+      reset(originalValues);
     }
     clearSelectedAvatar();
     setSaveError(null);
@@ -239,8 +278,10 @@ const EditAgentPage = () => {
     const newVisibility = agent?.visibility === 'private' ? 'public' : 'private';
     updateAgentMutation.mutate({
       visibility: newVisibility,
+      interactionMode: parseAgentInteractionMode(agent?.interactionMode),
       name: agent?.name || '',
       description: agent?.description || '',
+      showDetails: agent?.showDetails ?? false,
       systemPrompt: agent?.systemPrompt || '',
     });
     setShowVisibilityDialog(false);
@@ -400,7 +441,7 @@ const EditAgentPage = () => {
                       <FormItem className="sm:flex items-baseline">
                         <FormLabel className="w-30 text-md">
                           Name
-                          {dirtyFields.name && '*'}
+                          {isFieldDirty('name') && '*'}
                         </FormLabel>
                         <div className="flex-1">
                           <FormControl>
@@ -418,7 +459,7 @@ const EditAgentPage = () => {
                       <FormItem className="sm:flex items-baseline">
                         <FormLabel className="w-30 text-md">
                           Description
-                          {dirtyFields.description && '*'}
+                          {isFieldDirty('description') && '*'}
                         </FormLabel>
                         <div className="flex-1">
                           <FormControl>
@@ -434,6 +475,36 @@ const EditAgentPage = () => {
                   />
                   <FormField
                     control={form.control}
+                    name="interactionMode"
+                    render={({ field }) => (
+                      <FormItem className="sm:flex items-baseline">
+                        <FormLabel className="w-30 text-md">
+                          Mode
+                          {isFieldDirty('interactionMode') && '*'}
+                        </FormLabel>
+                        <div className="flex-1">
+                          <Select
+                            onValueChange={field.onChange}
+                            value={parseAgentInteractionMode(field.value, originalValues?.interactionMode)}
+                            disabled={isSavePending}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="assistant">Assistant</SelectItem>
+                              <SelectItem value="participant">Participant</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="showDetails"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between mt-4">
@@ -441,7 +512,7 @@ const EditAgentPage = () => {
                         <div className="flex gap-2 items-center">
                           <FormLabel className="text-xs text-muted-foreground">
                             show in view
-                            {dirtyFields.showDetails && '*'}
+                            {isFieldDirty('showDetails') && '*'}
                           </FormLabel>
                           <FormControl>
                             <Switch
@@ -461,7 +532,7 @@ const EditAgentPage = () => {
                       <FormItem className="sm:flex items-baseline">
                         <FormLabel className="w-30 text-md">
                           System Prompt
-                          {dirtyFields.systemPrompt && '*'}
+                          {isFieldDirty('systemPrompt') && '*'}
                         </FormLabel>
                         <div className="flex-1">
                           <FormControl>

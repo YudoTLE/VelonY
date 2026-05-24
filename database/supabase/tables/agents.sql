@@ -4,6 +4,7 @@ CREATE TABLE agents (
   creator_id    UUID NOT NULL, -- REFERENCES users(id) ON DELETE CASCADE
   
   visibility    VARCHAR(16) NOT NULL DEFAULT 'private',
+  interaction_mode VARCHAR(16) NOT NULL DEFAULT 'assistant' CHECK (interaction_mode IN ('assistant', 'participant')),
   name          VARCHAR(64) NOT NULL,
   description   TEXT NOT NULL,
   show_details  BOOLEAN NOT NULL DEFAULT FALSE,

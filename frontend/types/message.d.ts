@@ -19,6 +19,7 @@ declare global {
     senderName?: string
     senderAvatar?: string
     agentName?: string
+    agentInteractionMode?: AgentInteractionMode | null
     agentUpdatedAt?: string
     modelName?: string
     status: MessageStatus
@@ -35,6 +36,7 @@ declare global {
     senderName: string
     senderAvatar: string
     agentName: string
+    agentInteractionMode: AgentInteractionMode
     agentUpdatedAt?: Date
     modelName: string
     status: MessageStatus
