@@ -204,16 +204,16 @@ const MessageBubbleComponent = (
                     </span>
                   )
                 : (
-                  <div className="overflow-hidden max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
-                        // pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
+                    <div className="overflow-hidden max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
+                          // pre: ({ children }) => <pre className='overflow-x-auto'>{children}</pre>
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
                   )}
             {message.isOwn
               ? (
