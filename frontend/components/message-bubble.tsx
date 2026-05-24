@@ -39,8 +39,19 @@ import {
 
 import { format } from 'date-fns';
 
+const rendersAsThreadMessage = (message?: Message | null) =>
+  message?.type === 'user'
+  || (message?.type === 'agent' && message.agentInteractionMode === 'participant');
+
+const getSpeakerKey = (message?: Message | null) => {
+  if (!message) return null;
+  if (message.type === 'agent') return message.agentId ? `agent:${message.agentId}` : `agent:${message.id}`;
+  if (message.isOwn) return 'self';
+  return message.senderId ? `user:${message.senderId}` : null;
+};
+
 const MessageBubbleComponent = (
-  { prevMessage, nextMessage, message }: { prevMessage?: Message, nextMessage?: Message, message: Message },
+  { prevMessage, nextMessage, message }: { prevMessage?: Message | null, nextMessage?: Message | null, message: Message },
 ) => {
   const { mutate: deleteMutation } = useDeleteMessage(message.conversationId);
   const { mutateAsync: updateMutation, isPending: isUpdating } = useUpdateMessage(message.conversationId);
@@ -83,10 +94,12 @@ const MessageBubbleComponent = (
     }
   };
 
-  const isSameSenderAsPrev = (!!message.senderId && message.senderId === prevMessage?.senderId) || (message.isOwn && (message.isOwn === prevMessage?.isOwn));
-  const isSameSenderAsNext = (!!message.senderId && message.senderId === nextMessage?.senderId) || (message.isOwn && (message.isOwn === nextMessage?.isOwn));
-  const mergeWithPrev = isSameSenderAsPrev && prevMessage?.type === 'user';
-  const mergeWithNext = isSameSenderAsNext && nextMessage?.type === 'user';
+  const speakerKey = getSpeakerKey(message);
+  const isSameSenderAsPrev = !!speakerKey && speakerKey === getSpeakerKey(prevMessage);
+  const isSameSenderAsNext = !!speakerKey && speakerKey === getSpeakerKey(nextMessage);
+  const mergeWithPrev = isSameSenderAsPrev && rendersAsThreadMessage(prevMessage);
+  const mergeWithNext = isSameSenderAsNext && rendersAsThreadMessage(nextMessage);
+  const showTypingIndicator = message.status === 'sending' && !message.content;
 
   return (
     <div className={cn(
@@ -179,7 +192,18 @@ const MessageBubbleComponent = (
                     </div>
                   </div>
                 )
-              : (
+              : showTypingIndicator
+                ? (
+                    <span className="flex justify-begin w-full h-6 relative">
+                      <Player
+                        autoplay
+                        loop
+                        src="/animations/typing.json"
+                        className=" absolute size-10 left-0 top-1/2 transform -translate-y-1/2"
+                      />
+                    </span>
+                  )
+                : (
                   <div className="overflow-hidden max-w-none">
                     <ReactMarkdown
                       components={{
@@ -190,7 +214,7 @@ const MessageBubbleComponent = (
                       {message.content}
                     </ReactMarkdown>
                   </div>
-                )}
+                  )}
             {message.isOwn
               ? (
                   <span className="ml-auto flex items-center gap-1">

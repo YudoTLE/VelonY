@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMe } from '@/hooks/use-users';
 
 import { processRawAgent, processRawAgents } from '@/lib/transformers';
+import { getAgentAvatarUrl } from '@/lib/agent-avatar';
 import api from '@/lib/axios';
 
 type ApiErrorResponse = {
@@ -75,7 +76,7 @@ const updateAgentCaches = (
   queryClient.invalidateQueries({ queryKey: ['agents'] });
 };
 
-const updateMessageAgentAvatarVersions = (
+const updateMessageAgentMetadata = (
   queryClient: QueryClient,
   updatedAgent: Agent,
 ) => {
@@ -106,9 +107,20 @@ const updateMessageAgentAvatarVersions = (
         }
 
         changed = true;
+        const isParticipant = updatedAgent.interactionMode === 'participant';
+        const initial = updatedAgent.name
+          .trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
+
         return {
           ...typedMessage,
+          agentName: updatedAgent.name,
+          agentInteractionMode: updatedAgent.interactionMode,
           agentUpdatedAt: updatedAgent.updatedAt,
+          senderName: isParticipant ? updatedAgent.name : typedMessage.senderName,
+          senderAvatar: isParticipant
+            ? getAgentAvatarUrl(updatedAgent.id, updatedAgent.updatedAt)
+            : typedMessage.senderAvatar,
+          initial: isParticipant ? initial : typedMessage.initial,
         };
       });
 
@@ -198,7 +210,7 @@ export const useUpdateAgentById = (agentId: string) => {
       }
 
       updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
-      updateMessageAgentAvatarVersions(queryClient, updatedAgent);
+      updateMessageAgentMetadata(queryClient, updatedAgent);
     },
   });
 };
@@ -234,7 +246,7 @@ export const useUpdateAgentAvatarById = (agentId: string) => {
       }
 
       updateAgentCaches(queryClient, agentId, updatedAgent, me.id);
-      updateMessageAgentAvatarVersions(queryClient, updatedAgent);
+      updateMessageAgentMetadata(queryClient, updatedAgent);
     },
   });
 };

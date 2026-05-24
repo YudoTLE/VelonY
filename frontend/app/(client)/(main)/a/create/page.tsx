@@ -17,10 +17,19 @@ import {
 } from '@/components/ui/form';
 import { TextareaAutosize } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { parseAgentInteractionMode } from '@/lib/agent-interaction-mode';
 
 const formSchema = z.object({
   visibility: z.enum(['private', 'public']),
+  interactionMode: z.enum(['assistant', 'participant']),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   description: z.string(),
   showDetails: z.boolean(),
@@ -34,6 +43,7 @@ const CreateAgentPage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       visibility: 'private',
+      interactionMode: 'assistant',
       name: '',
       description: '',
       showDetails: false,
@@ -91,6 +101,32 @@ const CreateAgentPage = () => {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="interactionMode"
+                  render={({ field }) => (
+                    <FormItem className="sm:flex items-baseline">
+                      <FormLabel className="w-30 text-md">Mode</FormLabel>
+                      <div className="flex-1">
+                        <Select
+                          onValueChange={field.onChange}
+                          value={parseAgentInteractionMode(field.value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="assistant">Assistant</SelectItem>
+                            <SelectItem value="participant">Participant</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </div>
                     </FormItem>

@@ -1,15 +1,19 @@
 declare global {
   type AgentVisibility = 'private' | 'public' | 'default';
+  type AgentInteractionMode = 'assistant' | 'participant';
 
   type AgentData = {
     visibility: AgentVisibility
+    interactionMode: AgentInteractionMode
     name: string
     description: string
     showDetails: boolean
     systemPrompt: string | null
   };
 
-  type AgentRaw = AgentData & {
+  type AgentRaw = Omit<AgentData, 'interactionMode'> & {
+    interactionMode?: AgentInteractionMode | null
+
     id: string
     creatorId: string
 
