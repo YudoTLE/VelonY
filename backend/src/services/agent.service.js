@@ -1,5 +1,14 @@
 import { getContext } from '../lib/async-local-storage.js'
 
+const AGENT_INTERACTION_MODES = new Set(['assistant', 'participant'])
+
+const validateInteractionMode = (interactionMode) => {
+  if (interactionMode === undefined) return
+  if (AGENT_INTERACTION_MODES.has(interactionMode)) return
+
+  throw { status: 400, message: 'Invalid agent interaction mode' }
+}
+
 const getMaxAvatarBytes = () =>
   Number(process.env.AGENT_AVATAR_MAX_BYTES || 5 * 1024 * 1024)
 
@@ -89,25 +98,29 @@ export default function AgentService({ repo, avatarStorage }) {
     async update(agentId, payload) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
+      validateInteractionMode(payload?.interactionMode)
     
       const promises = [
         repo.agent.update({ agentId }, { ...payload, updatedAt: new Date() }),
         repo.agentSubscription.select({ agentId }),
       ]
 
-      const willBePublic = payload?.visibility === 'public'
-      if (!willBePublic) {
+      const shouldRemoveSubscriptions = payload?.visibility != null && payload.visibility !== 'public'
+      if (shouldRemoveSubscriptions) {
         promises.push(repo.agentSubscription.delete({ agentId }))
       } else {
         promises.push(Promise.resolve())
       }
     
       const [[agent], subscriptions, _] = await Promise.all(promises)
+      if (!agent) {
+        throw { status: 404, message: 'Agent not found' }
+      }
 
       const enrichedAgent = {
         ...agent,
         isSubscribed: subscriptions.some(s => s.userId === user.sub),
-        subscriberCount: willBePublic ? subscriptions.length : 0,
+        subscriberCount: agent.visibility === 'public' ? subscriptions.length : 0,
       }
 
       return enrichedAgent
@@ -180,6 +193,7 @@ export default function AgentService({ repo, avatarStorage }) {
     async create(payload) {
       const { user } = getContext()
       if (!user) throw { status: 401, message: 'Unauthenticated' }
+      validateInteractionMode(payload?.interactionMode)
 
       const [agent] = await repo.agent.insert([{...payload, creatorId: user.sub}])
 
